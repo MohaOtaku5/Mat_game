@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dungeon Lotto: Host Edition 🏰</title>
+    <title>Dungeon Lotto: EXTREME Edition 🏰</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
@@ -34,10 +34,18 @@
         header {
             padding: 15px; border-bottom: 2px solid var(--gold);
             display: flex; justify-content: space-between; align-items: center; background: #1a1a1a;
+            position: relative;
         }
 
-        h1 { margin: 0; color: var(--gold); font-size: 2rem; text-shadow: 0 0 10px var(--gold); }
-        #room-counter { font-size: 1.8rem; color: var(--gold); border: 1px solid var(--gold); padding: 5px 15px; }
+        h1 { margin: 0; color: var(--gold); font-size: 2.2rem; text-shadow: 0 0 10px var(--gold); }
+        #room-counter { font-size: 2rem; color: #fff; border: 2px solid var(--gold); padding: 5px 15px; background: #000; }
+        
+        /* RÉCORD DE LA SESIÓN */
+        #record-display {
+            position: absolute; top: 100%; left: 15px; background: #000;
+            color: #2ecc71; border: 1px dashed #2ecc71; padding: 2px 10px;
+            font-size: 1.2rem; border-top: none;
+        }
 
         /* =========================================================
            ESTILOS BLINDADOS PARA SEPARAR HOST Y JUGADOR
@@ -65,17 +73,20 @@
 
         #winner-banner {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: #000; border: 4px double var(--gold); padding: 40px;
-            text-align: center; z-index: 1000; display: none;
+            background: rgba(0,0,0,0.95); border: 4px double var(--gold); padding: 40px;
+            text-align: center; z-index: 1000; display: none; min-width: 350px;
         }
 
-        button { background: #222; color: var(--gold); border: 2px solid var(--gold); padding: 10px 25px; font-family: 'VT323'; font-size: 1.5rem; cursor: pointer; }
-        button:hover { background: var(--gold); color: #000; }
+        button { background: #222; color: var(--gold); border: 2px solid var(--gold); padding: 10px 25px; font-family: 'VT323'; font-size: 1.5rem; cursor: pointer; transition: 0.2s;}
+        button:hover { background: var(--gold); color: #000; box-shadow: 0 0 10px var(--gold);}
         input { background: #000; border: 1px solid var(--gold); color: var(--gold); padding: 15px; font-family: 'VT323'; font-size: 1.5rem; text-align: center; }
 
-        @keyframes appear { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+        @keyframes appear { 0% { transform: scale(0) rotate(-20deg); } 100% { transform: scale(1) rotate(0deg); } }
         .shake { animation: shake 0.2s; }
-        @keyframes shake { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(2px, 2px); } }
+        @keyframes shake { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(3px, 3px); } }
+        
+        .casi-miss { color: #ff9900; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
@@ -91,22 +102,23 @@
 <div id="game-container">
     <header>
         <h1>DUNGEON MASTER LOTTO</h1>
-        <div id="room-counter">SALAS: 0</div>
-        <div id="seed-tag" style="color: #888;">ESPERANDO...</div>
+        <div id="record-display" style="display:none;">🏆 RÉCORD: <span id="r-val">0</span> <span style="color:#888;">(Seed <span id="r-seed">---</span>)</span></div>
+        <div id="room-counter" style="color:var(--gold);">SALAS: 0</div>
+        <div id="seed-tag" style="color: #888; font-size: 1.5rem;">ESPERANDO...</div>
     </header>
 
     <div id="view-host">
         <div id="dungeon-canvas"></div>
         
         <div id="winner-banner">
-            <h2 id="win-title" style="color: var(--gold);">RONDA FINALIZADA</h2>
-            <div id="winner-list" style="font-size: 2rem; margin: 20px 0;"></div>
-            <button onclick="cerrarBanner()">CONTINUAR</button>
+            <h2 id="win-title" style="color: var(--gold); margin-top: 0; font-size: 3rem;"></h2>
+            <div id="winner-list" style="font-size: 1.8rem; margin: 20px 0; color: #fff;"></div>
+            <button onclick="cerrarBanner()">SIGUIENTE VÍCTIMA</button>
         </div>
 
         <div id="side-panel">
-            <h3 style="color: var(--gold); margin: 0 0 10px 0; border-bottom: 1px solid var(--gold);">📜 APUESTAS</h3>
-            <ul id="list-bets" style="list-style: none; padding: 0; margin: 0;"></ul>
+            <h3 style="color: var(--gold); margin: 0 0 10px 0; border-bottom: 1px solid var(--gold);">📜 ALMAS APOSTADAS</h3>
+            <ul id="list-bets" style="list-style: none; padding: 0; margin: 0; font-size: 1.2rem;"></ul>
         </div>
 
         <div class="controls">
@@ -116,38 +128,94 @@
     </div>
 
     <div id="view-player">
+        <h2 style="color:var(--gold); margin-bottom: 0;">INGRESA TU APUESTA</h2>
+        <p style="color:#aaa; text-align:center; max-width: 300px;">¿Cuántas salas crees que sobrevivirá la mazmorra?</p>
         <input type="text" id="p-name" placeholder="NOMBRE DEL HÉROE">
-        <input type="number" id="p-bet" placeholder="¿CUÁNTAS SALAS?">
-        <button onclick="enviarApuesta()">SELLAR APUESTA</button>
-        <p id="msg-ok" style="color: var(--gold); font-size: 1.5rem;"></p>
+        <input type="number" id="p-bet" placeholder="NÚMERO DE SALAS">
+        <button onclick="enviarApuesta()">SELLAR CON SANGRE</button>
+        <p id="msg-ok" style="color: #2ecc71; font-size: 1.5rem;"></p>
     </div>
 </div>
 
 <script>
+    // --- CONFIGURACIÓN SUPABASE ---
     const SB_URL = 'https://mzlamrxvtvxbuamyfplz.supabase.co';
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16bGFtcnh2dHZ4YnVhbXlmcGx6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNTAxNjEsImV4cCI6MjA5MjkyNjE2MX0.fdebTvX68sDHUbIjCFDhfipauXap4qabWko7U8gLyxg';
     const miSupabase = supabase.createClient(SB_URL, SB_KEY);
 
     window.onload = () => {
-        // Solo el host escucha las apuestas de la base de datos
         if (document.body.classList.contains('is-host')) {
             escucharApuestas();
+            mostrarRecord();
         }
     };
 
     let roomsData = [];
     const tileSize = 50;
 
+    // --- LÓGICA DEL MOTOR (DADOS EXPLOSIVOS + MULTIPLICADORES) ---
+    function tirarDadoExplosivo(caras) {
+        let total = 0; let tirada;
+        do {
+            tirada = Math.floor(Math.random() * caras) + 1;
+            total += tirada;
+        } while(tirada === caras); // Si sale el máximo, EXPLOTA y vuelve a tirar
+        return total;
+    }
+
+    function calcularTotalProcedural(seed) {
+        let counts = { 'A': 0, 'B': 0, 'C': 0 };
+        for(let l of seed) counts[l]++;
+
+        let esJackpot = (counts['A']===3 || counts['B']===3 || counts['C']===3);
+        let totalFinal = 0;
+        let letrasUnicas = [...new Set(seed.split(''))];
+
+        for(let l of letrasUnicas) {
+            let caras = (l==='A') ? 4 : (l==='B') ? 6 : 8;
+            let apariciones = counts[l];
+            let subtotalLetra = 0;
+
+            // Tiramos el dado por cada vez que aparezca la letra
+            for(let i=0; i<apariciones; i++) {
+                subtotalLetra += tirarDadoExplosivo(caras);
+            }
+
+            // Bono pareja (x2)
+            if(!esJackpot && apariciones === 2) {
+                subtotalLetra *= 2; 
+            }
+            totalFinal += subtotalLetra;
+        }
+
+        // Bono Jackpot (x3)
+        if(esJackpot) totalFinal *= 3;
+        
+        return totalFinal;
+    }
+
+    // --- FUNCIONES DE JUEGO ---
     async function nuevaRonda() {
         const letras = ['A', 'B', 'C'];
         let seed = "";
         for(let i=0; i<3; i++) seed += letras[Math.floor(Math.random() * 3)];
+        
         window.currentSeed = seed;
-        document.getElementById('seed-tag').innerText = "SEED: " + seed;
+        
+        // Destacar si hay multiplicadores visualmente
+        let counts = { 'A':0, 'B':0, 'C':0 };
+        for(let l of seed) counts[l]++;
+        let styleStr = "color: #888;";
+        if(counts['A']==3||counts['B']==3||counts['C']==3) styleStr = "color: #e74c3c; font-weight: bold; text-shadow: 0 0 10px red;";
+        else if(counts['A']==2||counts['B']==2||counts['C']==2) styleStr = "color: var(--gold); text-shadow: 0 0 5px var(--gold);";
+
+        document.getElementById('seed-tag').innerHTML = `<span style="${styleStr}">SEED: ${seed}</span>`;
         document.getElementById('dungeon-canvas').innerHTML = "";
         document.getElementById('room-counter').innerText = "SALAS: 0";
+        document.getElementById('room-counter').style.color = "#fff";
         document.getElementById('winner-banner').style.display = 'none';
         document.getElementById('btn-reveal').style.display = 'block';
+        
         await miSupabase.from('apuestas').delete().neq('id', 0);
         document.getElementById('list-bets').innerHTML = "";
     }
@@ -155,53 +223,76 @@
     async function enviarApuesta() {
         const n = document.getElementById('p-name').value;
         const b = document.getElementById('p-bet').value;
-        if(!n || !b) return alert("Faltan datos.");
+        if(!n || !b) return alert("Héroe cobarde, rellena todo.");
         const { error } = await miSupabase.from('apuestas').insert([{ name: n, cantidad: parseInt(b) }]);
         if(!error) {
-            document.getElementById('msg-ok').innerText = "✅ APUESTA REGISTRADA";
+            document.getElementById('msg-ok').innerText = "✅ APUESTA ENVIADA";
             document.getElementById('p-bet').value = "";
+            setTimeout(()=> document.getElementById('msg-ok').innerText = "", 3000);
         }
     }
 
     function revelar() {
-        const seed = window.currentSeed;
-        let total = 0;
-        seed.split('').forEach(l => {
-            if(l === 'A') total += Math.floor(Math.random() * 4) + 1;
-            if(l === 'B') total += Math.floor(Math.random() * 6) + 1;
-            if(l === 'C') total += Math.floor(Math.random() * 8) + 1;
-        });
         document.getElementById('btn-reveal').style.display = 'none';
-        generarMapa(total);
+        let numSalas = calcularTotalProcedural(window.currentSeed);
+        generarMapaAnimado(numSalas);
     }
 
-    function generarMapa(num) {
+    function generarMapaAnimado(num) {
         const canvas = document.getElementById('dungeon-canvas');
         roomsData = [];
         const startX = Math.floor(canvas.offsetWidth / 2 / tileSize) * tileSize;
         const startY = Math.floor(canvas.offsetHeight / 2 / tileSize) * tileSize;
         colocarRoom(startX, startY, "🏰", 0);
 
-        for(let i = 1; i < num; i++) {
-            setTimeout(() => {
-                let ok = false; let tries = 0;
-                while(!ok && tries < 50) {
-                    const parent = roomsData[Math.floor(Math.random() * roomsData.length)];
-                    const dir = [[0,1], [0,-1], [1,0], [-1,0]][Math.floor(Math.random()*4)];
-                    const nX = parent.x + (dir[0] * tileSize);
-                    const nY = parent.y + (dir[1] * tileSize);
-                    if(!roomsData.some(r => r.x === nX && r.y === nY)) {
-                        colocarPasillo(parent.x, parent.y, nX, nY);
-                        colocarRoom(nX, nY, "🪨", i);
-                        ok = true;
-                    }
-                    tries++;
+        let i = 1;
+
+        function animarSiguiente() {
+            if(i >= num) {
+                // Finalizó la generación
+                actualizarRecord(num, window.currentSeed);
+                setTimeout(() => buscarGanadores(num), 1500);
+                return;
+            }
+
+            let ok = false; let tries = 0;
+            while(!ok && tries < 50) {
+                const parent = roomsData[Math.floor(Math.random() * roomsData.length)];
+                const dir = [[0,1], [0,-1], [1,0], [-1,0]][Math.floor(Math.random()*4)];
+                const nX = parent.x + (dir[0] * tileSize);
+                const nY = parent.y + (dir[1] * tileSize);
+                if(!roomsData.some(r => r.x === nX && r.y === nY)) {
+                    colocarPasillo(parent.x, parent.y, nX, nY);
+                    colocarRoom(nX, nY, "🪨", i);
+                    ok = true;
                 }
-                document.getElementById('room-counter').innerText = "SALAS: " + (i + 1);
-                document.getElementById('game-container').classList.add('shake');
-                setTimeout(() => document.getElementById('game-container').classList.remove('shake'), 150);
-                if(i === num - 1) setTimeout(() => buscarGanadores(num), 1200);
-            }, i * 400);
+                tries++;
+            }
+            
+            document.getElementById('room-counter').innerText = "SALAS: " + (i + 1);
+            document.getElementById('game-container').classList.add('shake');
+            setTimeout(() => document.getElementById('game-container').classList.remove('shake'), 100);
+
+            i++;
+
+            // CRESCENDO DE VELOCIDAD (Tensión pura)
+            let delay = 100; // Va cagando leches al principio
+            if(i > 8) delay = 100 + ((i - 8) * 60); // Frena progresivamente
+            if(delay > 900) delay = 900; // Cap máximo
+            
+            // Si estamos a 1 o 2 salas del final, agonía máxima
+            if(i >= Math.max(1, num - 2)) {
+                delay = 1200;
+                document.getElementById('room-counter').style.color = "#e74c3c"; // El contador se pone rojo
+            }
+
+            setTimeout(animarSiguiente, delay);
+        }
+
+        if(num > 1) setTimeout(animarSiguiente, 100);
+        else {
+            actualizarRecord(num, window.currentSeed);
+            setTimeout(() => buscarGanadores(num), 1000);
         }
     }
 
@@ -227,17 +318,52 @@
         document.getElementById('dungeon-canvas').appendChild(corr);
     }
 
+    // --- GANADORES, CASI GANADORES Y RÉCORD ---
     async function buscarGanadores(total) {
         const { data: b } = await miSupabase.from('apuestas').select('*');
         const list = document.getElementById('winner-list');
         document.getElementById('winner-banner').style.display = 'block';
-        const wins = b.filter(a => a.cantidad === total);
-        if(wins.length > 0) {
-            document.getElementById('win-title').innerText = "¡VICTORIA!";
-            list.innerHTML = wins.map(w => `🏆 ${w.name}`).join('<br>');
+        
+        let ganadores = b.filter(a => a.cantidad === total);
+        // Efecto Casi-Ganador (+/- 1)
+        let casiGanadores = b.filter(a => Math.abs(a.cantidad - total) === 1);
+
+        let html = "";
+
+        if(ganadores.length > 0) {
+            document.getElementById('win-title').innerText = "¡VICTORIA ABSOLUTA!";
+            document.getElementById('win-title').style.color = "#2ecc71";
+            html += ganadores.map(w => `🏆 ${w.name}`).join('<br>');
         } else {
-            document.getElementById('win-title').innerText = "DERROTA GENERAL";
-            list.innerHTML = "Nadie acertó las " + total + " salas.";
+            document.getElementById('win-title').innerText = "TODOS MUERTOS";
+            document.getElementById('win-title').style.color = "#e74c3c";
+            html += `<div style="font-size: 1.4rem; margin-bottom: 20px; color:#aaa;">Nadie adivinó las exactas ${total} salas...</div>`;
+        }
+
+        if(casiGanadores.length > 0) {
+            html += `<div class="casi-miss" style="margin-top: 25px; font-size: 1.5rem; border-top: 1px dashed #555; padding-top:10px;">¡POR LOS PELOS! (±1):</div>`;
+            html += casiGanadores.map(w => `<span style="color:#ff9900">😅 ${w.name} (Puso ${w.cantidad})</span>`).join('<br>');
+        }
+
+        list.innerHTML = html;
+    }
+
+    function actualizarRecord(total, seed) {
+        let currentRecord = parseInt(localStorage.getItem('dungeonRecord') || '0');
+        if(total > currentRecord) {
+            localStorage.setItem('dungeonRecord', total);
+            localStorage.setItem('dungeonRecordSeed', seed);
+            mostrarRecord();
+        }
+    }
+
+    function mostrarRecord() {
+        let r = localStorage.getItem('dungeonRecord');
+        let s = localStorage.getItem('dungeonRecordSeed');
+        if(r && r > 0) {
+            document.getElementById('record-display').style.display = 'block';
+            document.getElementById('r-val').innerText = r;
+            document.getElementById('r-seed').innerText = s;
         }
     }
 
@@ -247,7 +373,7 @@
         miSupabase.channel('l').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'apuestas' }, p => {
             const li = document.createElement('li');
             li.style.padding = "5px"; li.style.borderBottom = "1px solid #333";
-            li.innerHTML = `<span style="color:var(--gold)">${p.new.name}</span>: ${p.new.cantidad}`;
+            li.innerHTML = `👤 ${p.new.name}: <span style="color:var(--gold); font-weight:bold;">${p.new.cantidad}</span>`;
             document.getElementById('list-bets').prepend(li);
         }).subscribe();
     }
