@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dungeon Lotto: The Live Show 🎬🏰</title>
+    <title>Dungeon Lotto: JUICY OVERLOAD 🍓🏰</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
-        :root { --gold: #ffcc00; --stone: #1a1a1a; --wall: #333; --corridor: #444; --bg: #050505; --blood: #e74c3c; }
+        :root { --gold: #ffcc00; --stone: #1a1a1a; --wall: #333; --corridor: #555; --bg: #0a0a0c; --blood: #e74c3c; }
 
         body {
             background-color: var(--bg); color: #eee; font-family: 'VT323', monospace;
@@ -16,6 +16,18 @@
             min-height: 100vh; overflow: hidden; touch-action: manipulation;
         }
 
+        /* FONDO ANIMADO DE CUADRÍCULA (Juicy Depth) */
+        body::after {
+            content: ""; position: fixed; top: 0; left: 0; width: 200vw; height: 200vh;
+            background-image: 
+                linear-gradient(rgba(255, 204, 0, 0.05) 2px, transparent 2px),
+                linear-gradient(90deg, rgba(255, 204, 0, 0.05) 2px, transparent 2px);
+            background-size: 60px 60px; z-index: -1;
+            animation: moveGrid 30s linear infinite; pointer-events: none;
+        }
+        @keyframes moveGrid { 0% { transform: translate(0, 0); } 100% { transform: translate(-60px, -60px); } }
+
+        /* EFECTO SCANLINE RETRO */
         body::before {
             content: " "; display: block; position: fixed; top: 0; left: 0; bottom: 0; right: 0;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
@@ -34,102 +46,127 @@
         body.is-player { align-items: flex-start; padding-top: 20px; }
 
         /* =========================================
-           ESTILOS DEL HOST (INTACTOS)
+           VISTA DEL HOST
            ========================================= */
-        #game-container { width: 95vw; height: 90vh; background: #111; border: 4px solid var(--wall); display: flex; flex-direction: column; position: relative; }
-        header { padding: 15px; border-bottom: 2px solid var(--gold); display: flex; justify-content: space-between; align-items: center; background: #1a1a1a; position: relative; z-index: 10; }
-        h1 { margin: 0; color: var(--gold); font-size: 2.2rem; text-shadow: 0 0 10px var(--gold); }
-        #room-counter { font-size: 2.5rem; color: #fff; border: 2px solid var(--gold); padding: 5px 20px; background: #000; font-weight: bold; }
+        #game-container { width: 95vw; height: 92vh; background: rgba(10,10,12,0.9); border: 4px solid var(--gold); display: flex; flex-direction: column; position: relative; box-shadow: 0 0 30px rgba(0,0,0,0.8), inset 0 0 50px rgba(0,0,0,0.8); border-radius: 10px; overflow: hidden; }
+        header { padding: 15px 30px; border-bottom: 2px solid var(--gold); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.8); position: relative; z-index: 10; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        h1 { margin: 0; color: var(--gold); font-size: 2.8rem; text-shadow: 2px 2px 0px #000, 0 0 15px var(--gold); letter-spacing: 2px; }
+        #room-counter { font-size: 3rem; color: #fff; border: 3px solid var(--gold); padding: 5px 25px; background: #000; font-weight: bold; border-radius: 8px; box-shadow: inset 0 0 10px rgba(255,204,0,0.3); transition: 0.2s;}
+        .counter-bump { transform: scale(1.1); color: var(--gold) !important; border-color: #fff !important; box-shadow: 0 0 20px var(--gold) !important; }
         
-        #view-host { flex-grow: 1; display: flex; position: relative; overflow: hidden; flex-direction: column; }
+        #view-host { flex-grow: 1; display: flex; position: relative; overflow: hidden; flex-direction: column; perspective: 1000px; }
         #dungeon-canvas { flex-grow: 1; position: relative; }
         
-        #side-panel { position: absolute; right: 20px; top: 20px; width: 220px; background: rgba(0,0,0,0.85); border: 1px solid var(--gold); padding: 15px; max-height: 60%; overflow-y: auto; z-index: 100; }
-        #live-log { position: absolute; left: 20px; top: 20px; width: 340px; background: rgba(0,0,0,0.9); border: 2px dashed var(--gold); padding: 15px; font-size: 1.4rem; z-index: 100; display: none; box-shadow: 0 0 20px rgba(0,0,0,0.8); line-height: 1.4; }
+        #side-panel { position: absolute; right: 20px; top: 20px; width: 240px; background: rgba(0,0,0,0.85); border: 2px solid var(--gold); padding: 15px; max-height: 60%; overflow-y: auto; z-index: 100; border-radius: 10px; box-shadow: -5px 5px 20px rgba(0,0,0,0.5); backdrop-filter: blur(5px); }
+        
+        /* LA NUEVA CRÓNICA JUICY */
+        #live-log { position: absolute; left: 20px; top: 20px; width: 360px; height: 60%; background: rgba(10,10,15,0.9); border: 2px solid #555; border-left: 5px solid var(--gold); padding: 15px; z-index: 100; display: none; flex-direction: column; box-shadow: 5px 5px 25px rgba(0,0,0,0.7); border-radius: 5px; overflow: hidden; }
+        #log-content { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 5px; }
+        
+        /* Entradas individuales de la crónica */
+        .log-entry { background: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 5px; font-size: 1.5rem; animation: slideInLeft 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; border-left: 3px solid transparent; line-height: 1.2;}
+        .log-d4 { border-left-color: #2ecc71; background: linear-gradient(90deg, rgba(46, 204, 113, 0.1) 0%, transparent 100%); }
+        .log-d6 { border-left-color: #3498db; background: linear-gradient(90deg, rgba(52, 152, 219, 0.1) 0%, transparent 100%); }
+        .log-d8 { border-left-color: #9b59b6; background: linear-gradient(90deg, rgba(155, 89, 182, 0.1) 0%, transparent 100%); }
+        .log-system { text-align: center; color: #aaa; font-style: italic; background: none; border: none; font-size: 1.2rem; }
+        .log-highlight { color: var(--gold); font-weight: bold; }
+        .log-explode-text { color: #e74c3c; font-weight: bold; font-size: 1.8rem; text-shadow: 0 0 10px #e74c3c; display: inline-block; animation: popText 0.3s; }
+        .log-final { background: var(--gold); color: #000; text-align: center; font-weight: bold; font-size: 2rem; border-radius: 5px; padding: 10px; margin-top: 10px; box-shadow: 0 0 15px var(--gold); }
+        
+        @keyframes slideInLeft { 0% { transform: translateX(-50px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
 
         /* DADO GIGANTE HOST */
-        #giant-dice-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 400; display: none; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
-        #giant-dice-label { font-size: 4rem; color: var(--gold); font-weight: bold; margin-bottom: 30px; text-shadow: 0 0 20px #000; text-align: center; }
-        .rpg-dice { background: var(--gold); color: #000; display: flex; justify-content: center; align-items: center; font-weight: bold; text-shadow: 0 0 5px rgba(255,255,255,0.5); transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 20px 40px rgba(0,0,0,0.8); }
-        .rpg-dice.giant { width: 250px; height: 250px; font-size: 10rem; }
-        .dice-d4 { clip-path: polygon(50% 0%, 0% 100%, 100% 100%); align-items: flex-end; padding-bottom: 30px; }
-        .dice-d6 { border-radius: 20px; }
-        .dice-d8 { clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); }
-        .dice-rolling { animation: spinShake 0.1s infinite; filter: blur(2px); background: #888; color: #fff; }
-        .dice-explode { background: #e74c3c !important; color: #fff !important; transform: scale(1.3); box-shadow: 0 0 60px #e74c3c !important; animation: pulseExplode 0.5s infinite alternate; }
+        #giant-dice-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.95) 100%); z-index: 400; display: none; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(8px); }
+        #giant-dice-label { font-size: 5rem; color: var(--gold); font-weight: bold; margin-bottom: 40px; text-shadow: 0 5px 15px #000, 0 0 20px var(--gold); text-align: center; letter-spacing: 2px;}
+        .rpg-dice { background: var(--gold); color: #000; display: flex; justify-content: center; align-items: center; font-weight: bold; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .rpg-dice.giant { width: 300px; height: 300px; font-size: 12rem; box-shadow: 0 30px 60px rgba(0,0,0,0.8), inset 0 0 20px rgba(255,255,255,0.5); border: 5px solid #fff; }
+        
+        .dice-d4 { clip-path: polygon(50% 0%, 0% 100%, 100% 100%); align-items: flex-end; padding-bottom: 40px; border: none !important; background: linear-gradient(135deg, #2ecc71, #27ae60); color: #fff;}
+        .dice-d6 { border-radius: 30px; background: linear-gradient(135deg, #3498db, #2980b9); color: #fff; }
+        .dice-d8 { clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); border: none !important; background: linear-gradient(135deg, #9b59b6, #8e44ad); color: #fff; }
+        
+        .dice-rolling { animation: spinShake 0.1s infinite; filter: blur(3px); transform: scale(0.9); }
+        .dice-explode { background: #e74c3c !important; color: #fff !important; transform: scale(1.4); box-shadow: 0 0 80px #e74c3c !important; animation: pulseExplode 0.5s infinite alternate; border-color: #ff9999 !important; }
 
-        @keyframes spinShake { 0% { transform: rotate(-10deg) scale(1); } 50% { transform: rotate(10deg) scale(1.1); } 100% { transform: rotate(-10deg) scale(1); } }
-        @keyframes pulseExplode { 0% { transform: scale(1.2); text-shadow: 0 0 20px #fff; } 100% { transform: scale(1.4); text-shadow: 0 0 50px #fff; } }
+        @keyframes spinShake { 0% { transform: rotate(-15deg) scale(0.9); } 50% { transform: rotate(15deg) scale(1.1); } 100% { transform: rotate(-15deg) scale(0.9); } }
+        @keyframes pulseExplode { 0% { transform: scale(1.3); text-shadow: 0 0 20px #fff; } 100% { transform: scale(1.5); text-shadow: 0 0 50px #fff; } }
 
-        .controls { padding: 15px; background: #1a1a1a; display: flex; justify-content: center; gap: 20px; border-top: 1px solid var(--gold); z-index: 10; }
+        .controls { padding: 20px; background: rgba(0,0,0,0.8); display: flex; justify-content: center; gap: 30px; border-top: 2px solid var(--gold); z-index: 10; }
         
         /* TRAGAPERRAS HOST */
-        #seed-tag { display: flex; flex-direction: column; align-items: center; min-width: 250px; }
+        #seed-tag { display: flex; flex-direction: column; align-items: center; min-width: 280px; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 10px; border: 1px solid #444; }
         .slot-machine { display: flex; gap: 15px; margin-bottom: 5px; }
-        .slot-box { width: 55px; height: 65px; background: #050505; border: 3px solid #333; display: flex; justify-content: center; align-items: center; font-size: 4rem; font-weight: bold; color: #fff; box-shadow: inset 0 0 15px rgba(0,0,0,1); border-radius: 5px; transition: 0.3s; }
-        .slot-box.spinning { color: #444; filter: blur(1.5px); text-shadow: 0 10px 5px rgba(255,255,255,0.2), 0 -10px 5px rgba(255,255,255,0.2); }
-        .slot-box.locked { animation: lockImpact 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; border-color: #aaa; }
-        .slot-box.active-roll { border-color: #2ecc71; box-shadow: 0 0 20px #2ecc71, inset 0 0 15px rgba(46, 204, 113, 0.3); transform: scale(1.1); z-index: 50; }
-        .slot-box.jackpot { border-color: #e74c3c; color: #e74c3c; text-shadow: 0 0 25px #e74c3c; animation: jackpotPulse 0.5s infinite alternate; }
-        .slot-box.bonus { border-color: var(--gold); color: var(--gold); text-shadow: 0 0 20px var(--gold); }
+        .slot-box { width: 60px; height: 75px; background: #050505; border: 3px solid #555; display: flex; justify-content: center; align-items: center; font-size: 5rem; font-weight: bold; color: #fff; box-shadow: inset 0 0 20px rgba(0,0,0,1), 0 5px 10px rgba(0,0,0,0.5); border-radius: 8px; transition: 0.3s; }
+        .slot-box.spinning { color: #444; filter: blur(2px); text-shadow: 0 15px 5px rgba(255,255,255,0.2), 0 -15px 5px rgba(255,255,255,0.2); }
+        .slot-box.locked { animation: lockImpact 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; border-color: #fff; box-shadow: 0 0 20px #fff; }
+        .slot-box.active-roll { border-color: #2ecc71; box-shadow: 0 0 30px #2ecc71, inset 0 0 15px rgba(46, 204, 113, 0.4); transform: scale(1.15); z-index: 50; }
+        .slot-box.jackpot { border-color: #e74c3c; color: #e74c3c; text-shadow: 0 0 30px #e74c3c; animation: jackpotPulse 0.5s infinite alternate; }
+        .slot-box.bonus { border-color: var(--gold); color: var(--gold); text-shadow: 0 0 25px var(--gold); }
 
-        @keyframes lockImpact { 0% { transform: scale(1.4) translateY(-15px); color: #fff; text-shadow: 0 0 20px #fff; } 100% { transform: scale(1) translateY(0); } }
-        @keyframes jackpotPulse { 0% { transform: scale(1); box-shadow: inset 0 0 20px rgba(231, 76, 60, 0.4); } 100% { transform: scale(1.1); box-shadow: inset 0 0 50px rgba(231, 76, 60, 0.9); } }
+        @keyframes lockImpact { 0% { transform: scale(1.5) translateY(-20px); color: #fff; text-shadow: 0 0 30px #fff; } 100% { transform: scale(1) translateY(0); border-color: #555; box-shadow: none; } }
+        
+        /* MAZMORRA Y TEXTOS FLOTANTES */
+        .room { position: absolute; width: 45px; height: 45px; background: linear-gradient(135deg, #3a3a3a, #1a1a1a); border: 2px solid #666; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 20px; z-index: 10; animation: roomPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; box-shadow: 2px 2px 10px rgba(0,0,0,0.8); }
+        .room.gold-room { border-color: var(--gold); background: linear-gradient(135deg, #5a4a00, #1a1a00); box-shadow: 0 0 15px rgba(255,204,0,0.5); }
+        .corridor { position: absolute; background: #555; z-index: 5; box-shadow: inset 0 0 5px rgba(0,0,0,0.8); }
+        
+        @keyframes roomPop { 0% { transform: scale(0); opacity: 0; } 70% { transform: scale(1.2); } 100% { transform: scale(1); opacity: 1; } }
 
+        .floating-text { position: absolute; font-size: 2rem; font-weight: bold; color: #2ecc71; text-shadow: 0 0 5px #000, 1px 1px 0 #000; z-index: 20; pointer-events: none; animation: floatUp 1s ease-out forwards; }
+        .floating-text.extra { color: #e74c3c; font-size: 2.5rem; text-shadow: 0 0 10px #e74c3c, 2px 2px 0 #000; }
+        @keyframes floatUp { 0% { transform: translateY(0) scale(0.5); opacity: 1; } 20% { transform: translateY(-10px) scale(1.2); } 100% { transform: translateY(-40px) scale(1); opacity: 0; } }
+
+        /* EFECTOS DE TEMBLOR */
         .shake-small { animation: shakeSmall 0.15s; }
         @keyframes shakeSmall { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(3px, 5px); } }
-        .shake-heavy { animation: shakeHeavy 0.3s; }
-        @keyframes shakeHeavy { 0%, 100% { transform: translate(0,0); } 25% { transform: translate(-8px, -5px); } 50% { transform: translate(8px, 5px); } 75% { transform: translate(-5px, 8px); } }
+        .shake-heavy { animation: shakeHeavy 0.3s; filter: blur(1px); }
+        @keyframes shakeHeavy { 0%, 100% { transform: translate(0,0); } 25% { transform: translate(-10px, -8px); } 50% { transform: translate(10px, 8px); } 75% { transform: translate(-8px, 10px); } }
 
-        .room { position: absolute; width: 45px; height: 45px; background: #2a2a2a; border: 2px solid var(--wall); display: flex; align-items: center; justify-content: center; font-size: 20px; z-index: 10; animation: appear 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        .corridor { position: absolute; background: var(--corridor); z-index: 5; }
-        #winner-banner { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.95); border: 4px double var(--gold); padding: 40px; text-align: center; z-index: 1000; display: none; min-width: 450px; box-shadow: 0 0 50px rgba(0,0,0,1); }
-        #bet-timer { color: #e74c3c; font-size: 1.4rem; font-weight: bold; margin-top: 5px; height: 25px;}
+        #winner-banner { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.95); border: 4px double var(--gold); padding: 40px; text-align: center; z-index: 1000; display: none; min-width: 500px; box-shadow: 0 0 80px rgba(0,0,0,1), inset 0 0 30px rgba(255,204,0,0.2); border-radius: 15px; }
+        #bet-timer { color: #e74c3c; font-size: 1.6rem; font-weight: bold; margin-top: 5px; height: 25px; letter-spacing: 1px;}
 
-        button.host-btn { background: #222; color: var(--gold); border: 2px solid var(--gold); padding: 10px 25px; font-family: 'VT323'; font-size: 1.5rem; cursor: pointer; transition: 0.2s;}
-        button.host-btn:hover { background: var(--gold); color: #000; box-shadow: 0 0 10px var(--gold);}
-
-        @keyframes appear { 0% { transform: scale(0) rotate(-20deg); } 100% { transform: scale(1) rotate(0deg); } }
+        button.host-btn { background: #111; color: var(--gold); border: 2px solid var(--gold); padding: 15px 30px; font-family: 'VT323'; font-size: 1.8rem; cursor: pointer; transition: 0.2s; border-radius: 5px; text-transform: uppercase; letter-spacing: 2px; }
+        button.host-btn:hover { background: var(--gold); color: #000; box-shadow: 0 0 20px var(--gold); transform: translateY(-2px); }
+        button.host-btn:active { transform: translateY(2px); }
 
         /* =========================================
-           NUEVA INTERFAZ DEL JUGADOR (MÓVIL)
+           VISTA DEL JUGADOR (MÓVIL PULIDO)
            ========================================= */
-        #view-player { width: 95vw; max-width: 400px; display: flex; flex-direction: column; align-items: center; z-index: 10; margin: 0 auto; }
+        #view-player { width: 95vw; max-width: 420px; display: flex; flex-direction: column; align-items: center; z-index: 10; margin: 0 auto; }
         
-        .player-screen { display: none; flex-direction: column; align-items: center; width: 100%; background: rgba(10,10,10,0.9); border: 2px solid var(--wall); padding: 25px 20px; box-sizing: border-box; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
-        .player-screen.active { display: flex; animation: slideUp 0.3s ease-out; }
+        .player-screen { display: none; flex-direction: column; align-items: center; width: 100%; background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%); border: 2px solid #444; border-top: 2px solid var(--gold); padding: 30px 20px; box-sizing: border-box; border-radius: 15px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); }
+        .player-screen.active { display: flex; animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         
-        @keyframes slideUp { 0% { transform: translateY(30px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+        @keyframes slideUp { 0% { transform: translateY(40px) scale(0.95); opacity: 0; } 100% { transform: translateY(0) scale(1); opacity: 1; } }
 
-        .player-title { color: var(--gold); font-size: 2.2rem; margin: 0 0 15px 0; text-align: center; text-shadow: 0 0 10px rgba(255,204,0,0.3); }
+        .player-title { color: var(--gold); font-size: 2.6rem; margin: 0 0 10px 0; text-align: center; text-shadow: 0 5px 10px rgba(0,0,0,0.5); }
         
-        /* PANTALLA 1: SETUP */
-        .avatar-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 20px; }
-        .avatar-btn { font-size: 2rem; background: #222; border: 2px solid #444; border-radius: 50%; width: 60px; height: 60px; cursor: pointer; transition: 0.2s; display:flex; justify-content:center; align-items:center;}
-        .avatar-btn.selected { border-color: var(--gold); background: rgba(255,204,0,0.2); transform: scale(1.1); box-shadow: 0 0 15px var(--gold); }
-        input.player-input { width: 100%; background: #000; border: 2px solid var(--wall); color: #fff; padding: 15px; font-family: 'VT323'; font-size: 1.5rem; text-align: center; margin-bottom: 20px; box-sizing: border-box; }
-        input.player-input:focus { outline: none; border-color: var(--gold); }
-
-        /* PANTALLA 2: APUESTAS */
-        #player-info-tag { display: flex; align-items: center; gap: 10px; background: #000; border: 1px solid var(--gold); padding: 5px 15px; border-radius: 20px; margin-bottom: 20px; color: var(--gold); font-size: 1.4rem; }
-        .bet-control-panel { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 20px; margin-bottom: 30px; }
-        .bet-row { display: flex; align-items: center; justify-content: center; gap: 15px; width: 100%; }
+        .avatar-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; width: 100%; padding: 0 10px; box-sizing: border-box;}
+        .avatar-btn { font-size: 2.5rem; background: #111; border: 2px solid #333; border-radius: 15px; width: 100%; aspect-ratio: 1; cursor: pointer; transition: 0.2s; display:flex; justify-content:center; align-items:center; box-shadow: inset 0 -5px 10px rgba(0,0,0,0.5);}
+        .avatar-btn.selected { border-color: var(--gold); background: rgba(255,204,0,0.15); transform: scale(1.05) translateY(-5px); box-shadow: 0 10px 15px rgba(0,0,0,0.5), inset 0 0 15px var(--gold); }
         
-        .bet-btn { background: #222; color: #fff; border: 2px solid #555; width: 65px; height: 65px; font-family: 'VT323'; font-size: 2.2rem; cursor: pointer; border-radius: 10px; transition: 0.1s; }
-        .bet-btn:active { transform: scale(0.9); background: #444; border-color: var(--gold); }
+        input.player-input { width: 100%; background: #000; border: 2px solid #444; border-radius: 10px; color: #fff; padding: 20px; font-family: 'VT323'; font-size: 1.8rem; text-align: center; margin-bottom: 25px; box-sizing: border-box; transition: 0.2s; box-shadow: inset 0 5px 10px rgba(0,0,0,0.5);}
+        input.player-input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 15px rgba(255,204,0,0.3), inset 0 5px 10px rgba(0,0,0,0.5); }
+
+        #player-info-tag { display: flex; align-items: center; justify-content: space-between; width: 100%; background: #000; border: 1px solid #444; padding: 10px 20px; border-radius: 10px; margin-bottom: 25px; box-sizing: border-box; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);}
         
-        #bet-number-display { font-size: 5rem; font-weight: bold; color: var(--gold); width: 100px; text-align: center; text-shadow: 0 0 20px rgba(255,204,0,0.5); transition: 0.1s; }
-        .pop-anim { animation: popText 0.2s; }
-        @keyframes popText { 0% { transform: scale(1); } 50% { transform: scale(1.3); color: #fff;} 100% { transform: scale(1); } }
+        .bet-control-panel { display: flex; flex-direction: column; align-items: center; width: 100%; gap: 20px; margin-bottom: 30px; background: rgba(0,0,0,0.3); padding: 20px; border-radius: 15px; border: 1px solid #222;}
+        .bet-row { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 10px; }
+        
+        .bet-btn { flex: 1; background: linear-gradient(180deg, #333 0%, #111 100%); color: #fff; border: 2px solid #555; height: 70px; font-family: 'VT323'; font-size: 2.5rem; cursor: pointer; border-radius: 10px; transition: 0.1s; box-shadow: 0 5px 0 #000; }
+        .bet-btn:active { transform: translateY(5px); box-shadow: 0 0 0 #000; border-color: var(--gold); color: var(--gold); }
+        
+        #bet-number-display { font-size: 6rem; font-weight: bold; color: var(--gold); text-align: center; text-shadow: 0 5px 15px rgba(0,0,0,0.8), 0 0 20px rgba(255,204,0,0.4); transition: 0.1s; width: 100%; margin: 10px 0;}
+        .pop-anim { animation: popText 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes popText { 0% { transform: scale(1); } 50% { transform: scale(1.4); color: #fff; text-shadow: 0 0 30px #fff;} 100% { transform: scale(1); } }
 
-        .action-btn { width: 100%; background: var(--blood); color: #fff; border: 3px solid #800000; padding: 15px; font-family: 'VT323'; font-size: 2rem; cursor: pointer; transition: 0.2s; text-transform: uppercase; border-radius: 5px; }
-        .action-btn:active { transform: scale(0.95); }
-        .action-btn.gold { background: var(--gold); color: #000; border-color: #b38f00; }
+        .action-btn { width: 100%; background: linear-gradient(180deg, #ff5e62 0%, #e74c3c 100%); color: #fff; border: 2px solid #c0392b; padding: 20px; font-family: 'VT323'; font-size: 2.2rem; cursor: pointer; transition: 0.2s; text-transform: uppercase; border-radius: 10px; box-shadow: 0 8px 0 #922b21, 0 15px 20px rgba(0,0,0,0.4); text-shadow: 0 2px 5px rgba(0,0,0,0.5);}
+        .action-btn:active { transform: translateY(8px); box-shadow: 0 0 0 #922b21, 0 5px 10px rgba(0,0,0,0.4); }
+        .action-btn.gold { background: linear-gradient(180deg, #ffd700 0%, #d4af37 100%); color: #000; border-color: #aa8c2c; box-shadow: 0 8px 0 #806921, 0 15px 20px rgba(0,0,0,0.4); text-shadow: none;}
+        .action-btn.gold:active { box-shadow: 0 0 0 #806921, 0 5px 10px rgba(0,0,0,0.4); }
 
-        /* PANTALLA 3: ESPERA */
-        .waiting-spinner { font-size: 4rem; margin: 20px 0; animation: float 2s infinite ease-in-out; }
-        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-15px); } 100% { transform: translateY(0px); } }
-
+        .waiting-spinner { font-size: 5rem; margin: 30px 0; animation: floatSpin 3s infinite ease-in-out; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5));}
+        @keyframes floatSpin { 0% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-20px) rotate(10deg); } 100% { transform: translateY(0px) rotate(0deg); } }
     </style>
 </head>
 <body>
@@ -155,7 +192,7 @@
                 <div id="slot-2" class="slot-box">?</div>
                 <div id="slot-3" class="slot-box">?</div>
             </div>
-            <span id="seed-bono" style="font-size: 1.3rem; font-weight: bold; height: 20px;"></span>
+            <span id="seed-bono" style="font-size: 1.4rem; font-weight: bold; height: 20px; margin-top:5px;"></span>
             <span id="bet-timer"></span>
         </div>
     </header>
@@ -169,33 +206,34 @@
         </div>
         
         <div id="live-log">
-            <h3 style="margin:0 0 10px 0; color:var(--gold); border-bottom:1px solid var(--gold); text-align:center;">📡 CRÓNICA</h3>
-            <div id="log-content" style="margin-top:10px; color:#aaa;">Esperando a los dioses...</div>
+            <h3 style="margin:0 0 10px 0; color:var(--gold); border-bottom:2px solid var(--gold); text-align:center; padding-bottom:10px;">📜 CRÓNICA DE FORJA</h3>
+            <div id="log-content">
+                <div class="log-system">El tablero está limpio. Esperando tirada...</div>
+            </div>
         </div>
         
         <div id="winner-banner">
-            <h2 id="win-title" style="color: var(--gold); margin-top: 0; font-size: 3rem;"></h2>
-            <div id="winner-list" style="font-size: 2rem; margin: 20px 0; color: #fff;"></div>
+            <h2 id="win-title" style="color: var(--gold); margin-top: 0; font-size: 3.5rem;"></h2>
+            <div id="winner-list" style="font-size: 2.2rem; margin: 25px 0; color: #fff; line-height: 1.5;"></div>
             <button class="host-btn" onclick="cerrarBanner()">SIGUIENTE VÍCTIMA</button>
         </div>
 
         <div id="side-panel">
-            <h3 style="color: var(--gold); margin: 0 0 10px 0; border-bottom: 1px solid var(--gold);">📜 APUESTAS</h3>
-            <ul id="list-bets" style="list-style: none; padding: 0; margin: 0; font-size: 1.2rem;"></ul>
+            <h3 style="color: var(--gold); margin: 0 0 10px 0; border-bottom: 2px solid var(--gold); padding-bottom:5px;">📜 APUESTAS</h3>
+            <ul id="list-bets" style="list-style: none; padding: 0; margin: 0; font-size: 1.3rem; line-height: 1.6;"></ul>
         </div>
 
         <div class="controls">
-            <button class="host-btn" id="btn-seed" onclick="nuevaRonda()">TIRAR DE LA PALANCA</button>
-            <button class="host-btn" id="btn-reveal" style="display:none" onclick="forjarMazmorraEnVivo()">FORJAR MAZMORRA</button>
+            <button class="host-btn" id="btn-seed" onclick="nuevaRonda()">🎰 TIRAR DE LA PALANCA</button>
+            <button class="host-btn" id="btn-reveal" style="display:none; background:var(--blood); border-color:#fff; color:#fff;" onclick="forjarMazmorraEnVivo()">⚔️ FORJAR MAZMORRA</button>
         </div>
     </div>
 </div>
 
 <div id="view-player">
-    
     <div id="screen-setup" class="player-screen active">
         <h2 class="player-title">CREA TU HÉROE</h2>
-        <p style="color:#aaa; text-align:center; margin-top:0;">Elige tu avatar y nombre de batalla.</p>
+        <p style="color:#aaa; text-align:center; margin-top:0; font-size: 1.2rem;">Elige tu avatar y nombre de batalla.</p>
         
         <div class="avatar-grid" id="avatar-selector">
             <button class="avatar-btn selected" onclick="selectAvatar(this, '🧙‍♂️')">🧙‍♂️</button>
@@ -212,20 +250,18 @@
 
     <div id="screen-bet" class="player-screen">
         <div id="player-info-tag">
-            <span id="tag-avatar">🧙‍♂️</span> <span id="tag-name">Héroe</span>
-            <span style="font-size:1rem; color:#888; text-decoration:underline; cursor:pointer;" onclick="clearProfile()">[Cambiar]</span>
+            <div><span id="tag-avatar" style="font-size:1.8rem; margin-right:5px;">🧙‍♂️</span> <span id="tag-name" style="color:var(--gold); font-size:1.6rem; font-weight:bold;">Héroe</span></div>
+            <span style="font-size:1.2rem; color:#888; text-decoration:underline; cursor:pointer; background:#222; padding:5px 10px; border-radius:5px;" onclick="clearProfile()">Cambiar</span>
         </div>
         
-        <h2 class="player-title" style="font-size:1.8rem;">¿CUÁNTAS SALAS SALDRÁN?</h2>
+        <h2 class="player-title" style="font-size:2rem; line-height:1.2;">¿CUÁNTAS SALAS<br>SOBREVIVIRÁ?</h2>
         
         <div class="bet-control-panel">
             <div class="bet-row">
                 <button class="bet-btn" onclick="modifyBet(-5)">-5</button>
                 <button class="bet-btn" onclick="modifyBet(-1)">-1</button>
             </div>
-            
             <div id="bet-number-display">15</div>
-            
             <div class="bet-row">
                 <button class="bet-btn" onclick="modifyBet(1)">+1</button>
                 <button class="bet-btn" onclick="modifyBet(5)">+5</button>
@@ -236,18 +272,19 @@
     </div>
 
     <div id="screen-wait" class="player-screen">
-        <h2 class="player-title" style="color:var(--blood);">PACTO SELLADO</h2>
+        <h2 class="player-title" style="color:var(--blood); font-size:3rem; text-shadow: 0 0 20px rgba(231, 76, 60, 0.5);">PACTO SELLADO</h2>
         <div class="waiting-spinner">🔮</div>
-        <p style="color:#aaa; text-align:center; font-size:1.4rem;">Has apostado <strong><span id="wait-bet-val" style="color:var(--gold)">0</span></strong> salas.<br><br>Mira la pantalla grande y reza a los dados.</p>
-        
-        <button class="action-btn gold" style="margin-top: 30px;" onclick="resetPlayerRound()">VOLVER A APOSTAR</button>
+        <div style="background: rgba(0,0,0,0.5); border: 1px solid #333; padding: 20px; border-radius: 10px; width: 100%; box-sizing:border-box;">
+            <p style="color:#ccc; text-align:center; font-size:1.6rem; margin:0;">Has apostado por:<br><span id="wait-bet-val" style="color:var(--gold); font-size: 4rem; font-weight:bold; display:block; margin: 10px 0; text-shadow: 0 0 15px var(--gold);">0</span> salas.</p>
+        </div>
+        <p style="color:#888; text-align:center; font-size:1.2rem; margin-top:20px;">Reza a los dados de la pantalla grande.</p>
+        <button class="action-btn gold" style="margin-top: 20px; padding: 15px;" onclick="resetPlayerRound()">NUEVA RONDA</button>
     </div>
-
 </div>
 
 <script>
     // ==========================================
-    // CONFIGURACIÓN SUPABASE
+    // CONFIGURACIÓN SUPABASE Y UTILIDADES
     // ==========================================
     const SB_URL = 'https://mzlamrxvtvxbuamyfplz.supabase.co';
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16bGFtcnh2dHZ4YnVhbXlmcGx6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNTAxNjEsImV4cCI6MjA5MjkyNjE2MX0.fdebTvX68sDHUbIjCFDhfipauXap4qabWko7U8gLyxg';
@@ -276,11 +313,11 @@
     function initPlayerMode() {
         const savedName = localStorage.getItem('dl_playerName');
         const savedAvatar = localStorage.getItem('dl_playerAvatar');
-        
         if (savedName && savedAvatar) {
             playerAvatar = savedAvatar;
             document.getElementById('tag-name').innerText = savedName;
             document.getElementById('tag-avatar').innerText = playerAvatar;
+            document.getElementById('p-name').value = savedName; // Por si limpia perfil
             showScreen('screen-bet');
         } else {
             showScreen('screen-setup');
@@ -297,21 +334,23 @@
         document.querySelectorAll('.avatar-btn').forEach(b => b.classList.remove('selected'));
         btn.classList.add('selected');
         playerAvatar = emoji;
+        if(navigator.vibrate) navigator.vibrate(20);
     }
 
     function savePlayerProfile() {
         const name = document.getElementById('p-name').value.trim();
-        if (!name) { alert("¡Necesitas un nombre!"); return; }
-        
+        if (!name) { 
+            let input = document.getElementById('p-name');
+            input.style.borderColor = "var(--blood)";
+            input.classList.add('shake-small');
+            setTimeout(()=> { input.classList.remove('shake-small'); input.style.borderColor = "var(--wall)"; }, 300);
+            return; 
+        }
         localStorage.setItem('dl_playerName', name);
         localStorage.setItem('dl_playerAvatar', playerAvatar);
-        
         document.getElementById('tag-name').innerText = name;
         document.getElementById('tag-avatar').innerText = playerAvatar;
-        
-        // Vibrate if mobile supports it
         if(navigator.vibrate) navigator.vibrate(50);
-        
         showScreen('screen-bet');
     }
 
@@ -324,19 +363,16 @@
     function modifyBet(amount) {
         currentBet += amount;
         if (currentBet < 1) currentBet = 1;
-        if (currentBet > 150) currentBet = 150; // Límite por si acaso
+        if (currentBet > 999) currentBet = 999; 
         updateBetDisplay();
-        
         if(navigator.vibrate) navigator.vibrate(20);
     }
 
     function updateBetDisplay() {
         const display = document.getElementById('bet-number-display');
         display.innerText = currentBet;
-        
-        // Animación de bote
         display.classList.remove('pop-anim');
-        void display.offsetWidth; // Trigger reflow
+        void display.offsetWidth; 
         display.classList.add('pop-anim');
     }
 
@@ -346,11 +382,9 @@
         btn.innerText = "SELLANDO...";
 
         const finalName = `${playerAvatar} ${localStorage.getItem('dl_playerName')}`;
-        
         const { error } = await miSupabase.from('apuestas').insert([{ name: finalName, cantidad: currentBet }]);
         
         if(!error) {
-            // Efecto Juicy de sangre
             let flash = document.getElementById('flash-overlay');
             flash.classList.remove('flash-anim');
             flash.classList.add('flash-blood');
@@ -364,23 +398,22 @@
                 btn.innerText = "🩸 SELLAR PACTO";
             }, 300);
         } else {
-            alert("Error al sellar el pacto. El Host ha bloqueado la base de datos o no hay internet.");
+            alert("Los Dioses rechazan tu conexión. Revisa tu internet.");
             btn.disabled = false;
             btn.innerText = "🩸 SELLAR PACTO";
         }
     }
 
     function resetPlayerRound() {
-        // Vuelve a la pantalla de apuestas conservando el número actual (por si quiere apostar parecido)
+        if(navigator.vibrate) navigator.vibrate(30);
         showScreen('screen-bet');
     }
 
-
     // ==========================================
-    // LÓGICA DEL HOST (INTACTA DE LA VERSIÓN ANTERIOR)
+    // LÓGICA DEL HOST
     // ==========================================
     let roomsData = [];
-    const tileSize = 50;
+    const tileSize = 55; // Un poco mas grande para que luzca
     let timerIntervalHost;
     let globalRoomCount = 0;
 
@@ -392,8 +425,8 @@
             lista.innerHTML = "";
             data.forEach(p => {
                 const li = document.createElement('li');
-                li.style.padding = "5px"; li.style.borderBottom = "1px solid #333";
-                li.innerHTML = `<span style="font-weight:bold;">${p.name}</span>: <span style="color:var(--gold); font-weight:bold;">${p.cantidad}</span>`;
+                li.style.padding = "8px 5px"; li.style.borderBottom = "1px solid #333";
+                li.innerHTML = `<span style="font-weight:bold; color:#ddd;">${p.name}</span>: <span style="color:var(--gold); font-weight:bold; float:right;">${p.cantidad}</span>`;
                 lista.prepend(li);
             });
         }
@@ -403,14 +436,28 @@
         if(!IS_HOST) return;
         miSupabase.channel('l').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'apuestas' }, p => {
             const li = document.createElement('li');
-            li.style.padding = "5px"; li.style.borderBottom = "1px solid #333";
-            li.innerHTML = `<span style="font-weight:bold;">${p.new.name}</span>: <span style="color:var(--gold); font-weight:bold;">${p.new.cantidad}</span>`;
+            li.style.padding = "8px 5px"; li.style.borderBottom = "1px solid #333";
+            li.innerHTML = `<span style="font-weight:bold; color:#ddd;">${p.new.name}</span>: <span style="color:var(--gold); font-weight:bold; float:right;">${p.new.cantidad}</span>`;
             document.getElementById('list-bets').prepend(li);
             
-            // Sonidito visual
             li.style.background = "rgba(255,204,0,0.3)";
+            li.style.transition = "background 0.5s";
             setTimeout(()=> li.style.background = "transparent", 500);
         }).subscribe();
+    }
+
+    // Funciones Helper para la Crónica V2
+    function logMsg(text, typeClass="log-system") {
+        const logContent = document.getElementById('log-content');
+        const entry = document.createElement('div');
+        entry.className = `log-entry ${typeClass}`;
+        entry.innerHTML = text;
+        logContent.appendChild(entry);
+        logContent.scrollTop = logContent.scrollHeight; // Auto-scroll
+    }
+
+    function clearLog() {
+        document.getElementById('log-content').innerHTML = "";
     }
 
     async function nuevaRonda() {
@@ -422,7 +469,7 @@
         window.currentSeed = seed;
 
         document.getElementById('dungeon-canvas').innerHTML = "";
-        document.getElementById('room-counter').innerText = "SALAS: 0";
+        actualizarContador(0);
         document.getElementById('winner-banner').style.display = 'none';
         document.getElementById('live-log').style.display = 'none';
         document.getElementById('seed-bono').innerText = "";
@@ -463,20 +510,19 @@
     function aplicarEstilosBonoHost(seed) {
         let counts = { 'A':0, 'B':0, 'C':0 };
         for(let l of seed) counts[l]++;
-        
         let slots = [document.getElementById('slot-1'), document.getElementById('slot-2'), document.getElementById('slot-3')];
         let tagBono = document.getElementById('seed-bono');
         
         if(counts['A']==3||counts['B']==3||counts['C']==3) {
             slots.forEach(s => s.className = "slot-box jackpot");
-            tagBono.innerText = "¡JACKPOT x3!"; tagBono.style.color = "#e74c3c";
+            tagBono.innerText = "🎰 ¡JACKPOT x3! 🎰"; tagBono.style.color = "#e74c3c";
             let flash = document.getElementById('flash-overlay');
             flash.classList.add('flash-anim');
             setTimeout(() => flash.classList.remove('flash-anim'), 800);
         } else if(counts['A']==2||counts['B']==2||counts['C']==2) {
             let letraDoble = Object.keys(counts).find(k => counts[k] === 2);
             slots.forEach((s, i) => { if(seed[i] === letraDoble) s.className = "slot-box bonus"; else s.className = "slot-box"; });
-            tagBono.innerText = `BONUS: PAREJA [${letraDoble}] x2`; tagBono.style.color = "var(--gold)";
+            tagBono.innerText = `✨ BONUS: PAREJA [${letraDoble}] x2 ✨`; tagBono.style.color = "var(--gold)";
         } else {
             slots.forEach(s => s.className = "slot-box");
             tagBono.innerText = "MODO NORMAL"; tagBono.style.color = "#888";
@@ -508,14 +554,13 @@
         document.getElementById('bet-timer').innerText = "";
         document.getElementById('btn-reveal').style.display = 'none';
         
-        let logUI = document.getElementById('live-log');
-        let logContent = document.getElementById('log-content');
         let giantOverlay = document.getElementById('giant-dice-overlay');
         let giantDice = document.getElementById('giant-dice');
         let giantLabel = document.getElementById('giant-dice-label');
         
-        logUI.style.display = 'block';
-        logContent.innerHTML = "";
+        document.getElementById('live-log').style.display = 'flex';
+        clearLog();
+        logMsg("El tablero está limpio. Invocando la mazmorra...");
         
         let seed = window.currentSeed;
         let slots = [document.getElementById('slot-1'), document.getElementById('slot-2'), document.getElementById('slot-3')];
@@ -525,29 +570,28 @@
         const canvas = document.getElementById('dungeon-canvas');
         const startX = Math.floor(canvas.offsetWidth / 2 / tileSize) * tileSize;
         const startY = Math.floor(canvas.offsetHeight / 2 / tileSize) * tileSize;
-        colocarRoom(startX, startY, "🏰", 0);
+        colocarRoom(startX, startY, "🏰", 0, false);
 
         let totalSalasFinales = 0;
         let basePorLetra = {A:0, B:0, C:0};
         let counts = {A:0, B:0, C:0};
         for(let l of seed) counts[l]++;
-        let lineasLog = [];
 
         for(let i=0; i<3; i++) {
             let letra = seed[i];
             let caras = (letra==='A') ? 4 : (letra==='B') ? 6 : 8;
-            let claseDado = (letra==='A') ? 'dice-d4' : (letra==='B') ? 'dice-d6' : 'dice-d8';
+            let claseCSS = (letra==='A') ? 'log-d4' : (letra==='B') ? 'log-d6' : 'log-d8';
+            let shapeClase = (letra==='A') ? 'dice-d4' : (letra==='B') ? 'dice-d6' : 'dice-d8';
             
             slots.forEach(s => s.classList.remove('active-roll'));
             slots[i].classList.add('active-roll');
 
             giantOverlay.style.display = 'flex';
-            giantDice.className = `rpg-dice giant ${claseDado}`;
+            giantDice.className = `rpg-dice giant ${shapeClase}`;
             giantLabel.innerText = `SLOT ${i+1} [D${caras}]`;
             giantLabel.style.color = "var(--gold)";
 
-            lineasLog.push(`Slot ${i+1} [${letra}]:`);
-            logContent.innerHTML = lineasLog.join('<br>');
+            logMsg(`Preparando <span class="log-highlight">Slot ${i+1} (${letra})</span>...`, claseCSS);
             await sleep(1000); 
 
             let sumaDado = 0;
@@ -566,14 +610,14 @@
                 giantDice.innerText = tirada;
                 
                 if(tirada === caras) {
-                    tiradas.push(`<span style="color:#e74c3c; font-weight:bold">${tirada}💥</span>`);
+                    tiradas.push(`<span class="log-explode-text">${tirada}💥</span>`);
                     giantDice.classList.add('dice-explode');
                     giantLabel.innerText = "¡EXPLOSIÓN!";
                     giantLabel.style.color = "#e74c3c";
                     document.getElementById('game-container').classList.add('shake-heavy');
                     setTimeout(()=> document.getElementById('game-container').classList.remove('shake-heavy'), 200);
-                    lineasLog[lineasLog.length - 1] = `Slot ${i+1} [${letra}]: { ${tiradas.join(' + ')}... }`;
-                    logContent.innerHTML = lineasLog.join('<br>');
+                    
+                    logMsg(`¡Saca un <span class="log-explode-text">${tirada}</span>! Tirando de nuevo...`, claseCSS);
                     
                     await sleep(2500); 
                     giantDice.classList.remove('dice-explode');
@@ -584,8 +628,8 @@
                     tiradas.push(tirada);
                     giantLabel.innerText = `+${tirada}`;
                     giantLabel.style.color = "#2ecc71";
-                    lineasLog[lineasLog.length - 1] = `Slot ${i+1} [${letra}]: { ${tiradas.join(' + ')} }`;
-                    logContent.innerHTML = lineasLog.join('<br>');
+                    
+                    logMsg(`Se detiene en <strong>${tirada}</strong>.`, claseCSS);
                     await sleep(1500); 
                 }
             } while(tirada === caras);
@@ -595,10 +639,9 @@
             basePorLetra[letra] += sumaDado;
             totalSalasFinales += sumaDado;
 
-            lineasLog[lineasLog.length - 1] = `<span style="color:var(--gold)">Slot ${i+1} [${letra}]:</span> { ${tiradas.join(' + ')} } = <strong>${sumaDado}</strong>`;
-            logContent.innerHTML = lineasLog.join('<br>');
-
-            await spawnSalasVisuallyHost(sumaDado, false);
+            logMsg(`Resultado Slot ${i+1}: <span class="log-highlight">${sumaDado} salas</span>. {${tiradas.join(' + ')}}`, claseCSS);
+            await spawnSalasVisuallyHost(sumaDado, false, claseCSS);
+            
             slots[i].classList.remove('active-roll');
             await sleep(1000); 
         }
@@ -607,8 +650,7 @@
         let letraDoble = Object.keys(counts).find(k => counts[k] === 2);
 
         if(esJackpot) {
-            lineasLog.push(`<hr><span style="color:#e74c3c; font-size:1.6rem; animation: pulse 1s infinite;">🚨 CALCULANDO JACKPOT... 🚨</span>`);
-            logContent.innerHTML = lineasLog.join('<br>');
+            logMsg(`<span style="color:#e74c3c; font-size:1.6rem; font-weight:bold;">🚨 CALCULANDO JACKPOT... 🚨</span>`, "log-system");
             await sleep(3500); 
             
             let salasExtra = totalSalasFinales * 2; 
@@ -616,64 +658,90 @@
             flash.classList.add('flash-anim');
             setTimeout(() => flash.classList.remove('flash-anim'), 800);
 
-            lineasLog[lineasLog.length - 1] = `<hr><span style="color:#e74c3c; font-size:1.6rem;">🚨 ¡JACKPOT x3 ACTIVADO! 🚨<br>Inyectando ${salasExtra} salas extra...</span>`;
-            logContent.innerHTML = lineasLog.join('<br>');
-            await spawnSalasVisuallyHost(salasExtra, true); 
+            logMsg(`<span style="color:#e74c3c; font-size:1.6rem; font-weight:bold;">¡JACKPOT x3!<br>Inyectando +${salasExtra} salas...</span>`, "log-system");
+            await spawnSalasVisuallyHost(salasExtra, true, "log-d8"); 
             totalSalasFinales *= 3;
             
         } else if (letraDoble) {
-            lineasLog.push(`<hr><span style="color:var(--gold); font-size:1.4rem;">✨ CALCULANDO BONUS PAREJA... ✨</span>`);
-            logContent.innerHTML = lineasLog.join('<br>');
+            logMsg(`<span style="color:var(--gold); font-weight:bold;">✨ CALCULANDO BONUS PAREJA... ✨</span>`, "log-system");
             await sleep(2500); 
             
             let salasExtra = basePorLetra[letraDoble]; 
-            lineasLog[lineasLog.length - 1] = `<hr><span style="color:var(--gold); font-size:1.4rem;">✨ BONUS PAREJA [${letraDoble}] x2 ✨<br>Añadiendo ${salasExtra} salas...</span>`;
-            logContent.innerHTML = lineasLog.join('<br>');
-            await spawnSalasVisuallyHost(salasExtra, true);
+            logMsg(`<span style="color:var(--gold); font-weight:bold;">¡BONUS PAREJA [${letraDoble}] x2!<br>Añadiendo +${salasExtra} salas...</span>`, "log-system");
+            await spawnSalasVisuallyHost(salasExtra, true, "log-d6");
             totalSalasFinales += salasExtra;
         }
 
-        lineasLog.push(`<br><div style="background:#fff; color:#000; text-align:center; padding:5px; font-weight:bold;">COMPROBANDO APUESTAS...</div>`);
-        logContent.innerHTML = lineasLog.join('<br>');
+        logMsg(`<div class="log-final">TOTAL FINAL: ${totalSalasFinales} SALAS</div>`, "log-system");
         
         await sleep(3000); 
         buscarGanadoresHost(totalSalasFinales);
     }
 
-    async function spawnSalasVisuallyHost(cantidad, frenesi) {
+    // Actualiza UI del contador con pequeño bump animation
+    function actualizarContador(val) {
         let counterUI = document.getElementById('room-counter');
+        counterUI.innerText = "SALAS: " + val;
+        counterUI.classList.remove('counter-bump');
+        void counterUI.offsetWidth;
+        counterUI.classList.add('counter-bump');
+        setTimeout(() => counterUI.classList.remove('counter-bump'), 200);
+    }
+
+    // Floating text para la dopamina
+    function showFloatingText(x, y, text, isExtra) {
+        const floatEl = document.createElement('div');
+        floatEl.className = `floating-text ${isExtra ? 'extra' : ''}`;
+        floatEl.style.left = (x + 10) + 'px';
+        floatEl.style.top = (y - 10) + 'px';
+        floatEl.innerText = text;
+        document.getElementById('dungeon-canvas').appendChild(floatEl);
+        setTimeout(() => floatEl.remove(), 1000);
+    }
+
+    async function spawnSalasVisuallyHost(cantidad, frenesi, colorClass) {
         let container = document.getElementById('game-container');
 
         for(let i=0; i<cantidad; i++) {
             let ok = false; let tries = 0;
-            while(!ok && tries < 50) {
+            let finalX, finalY;
+            
+            while(!ok && tries < 100) {
                 const parent = roomsData[Math.floor(Math.random() * roomsData.length)];
                 const dir = [[0,1], [0,-1], [1,0], [-1,0]][Math.floor(Math.random()*4)];
-                const nX = parent.x + (dir[0] * tileSize);
-                const nY = parent.y + (dir[1] * tileSize);
-                if(!roomsData.some(r => r.x === nX && r.y === nY)) {
-                    colocarPasillo(parent.x, parent.y, nX, nY);
-                    colocarRoom(nX, nY, "🪨", globalRoomCount + 1);
+                finalX = parent.x + (dir[0] * tileSize);
+                finalY = parent.y + (dir[1] * tileSize);
+                if(!roomsData.some(r => r.x === finalX && r.y === finalY)) {
+                    colocarPasillo(parent.x, parent.y, finalX, finalY);
+                    colocarRoom(finalX, finalY, (frenesi && Math.random()>0.5)? "🔥" : "🪨", globalRoomCount + 1, frenesi);
                     ok = true;
                 }
                 tries++;
             }
+            
             globalRoomCount++;
-            counterUI.innerText = "SALAS: " + globalRoomCount;
-            if(frenesi) counterUI.style.color = "#e74c3c";
+            actualizarContador(globalRoomCount);
+            if(frenesi) document.getElementById('room-counter').style.color = "#e74c3c";
+            
+            // Texto Flotante
+            if(ok) showFloatingText(finalX, finalY, "+1", frenesi);
             
             container.classList.add('shake-small');
             setTimeout(() => container.classList.remove('shake-small'), 50);
 
-            let delay = frenesi ? 40 : (cantidad - i === 1 ? 1000 : (cantidad - i === 2 ? 600 : 120));
+            let delay = frenesi ? 35 : (cantidad - i === 1 ? 800 : (cantidad - i === 2 ? 400 : 80));
             await sleep(delay);
         }
     }
 
-    function colocarRoom(x, y, icon, idx) {
+    function colocarRoom(x, y, icon, idx, isFrenesi = false) {
         const room = document.createElement('div');
-        room.className = 'room'; room.style.left = x + 'px'; room.style.top = y + 'px';
-        if(idx > 0 && Math.random() > 0.8) icon = "💰";
+        room.className = 'room'; 
+        if(isFrenesi || (idx > 0 && Math.random() > 0.85)) {
+            room.classList.add('gold-room');
+            icon = isFrenesi ? icon : "💰";
+        }
+        room.style.left = x + 'px'; room.style.top = y + 'px';
         room.innerHTML = icon;
         document.getElementById('dungeon-canvas').appendChild(room);
         roomsData.push({x, y});
@@ -681,9 +749,9 @@
 
     function colocarPasillo(x1, y1, x2, y2) {
         const corr = document.createElement('div');
-        corr.className = 'corridor'; const p = 22;
-        if(x1 === x2) { corr.style.width = '6px'; corr.style.height = tileSize + 'px'; corr.style.left = (x1 + p) + 'px'; corr.style.top = Math.min(y1, y2) + p + 'px';
-        } else { corr.style.height = '6px'; corr.style.width = tileSize + 'px'; corr.style.top = (y1 + p) + 'px'; corr.style.left = Math.min(x1, x2) + p + 'px'; }
+        corr.className = 'corridor'; const p = 24; // Ajuste por tilesize
+        if(x1 === x2) { corr.style.width = '8px'; corr.style.height = tileSize + 'px'; corr.style.left = (x1 + p) + 'px'; corr.style.top = Math.min(y1, y2) + p + 'px';
+        } else { corr.style.height = '8px'; corr.style.width = tileSize + 'px'; corr.style.top = (y1 + p) + 'px'; corr.style.left = Math.min(x1, x2) + p + 'px'; }
         document.getElementById('dungeon-canvas').appendChild(corr);
     }
 
@@ -695,19 +763,19 @@
         let ganadores = b.filter(a => parseInt(a.cantidad) === total);
         let casiGanadores = b.filter(a => Math.abs(parseInt(a.cantidad) - total) === 1);
         
-        let html = `<div style="font-size: 2.5rem; margin-bottom: 20px;">TOTAL EXACTO: <span style="color:#fff">${total}</span></div>`;
+        let html = `<div style="font-size: 3rem; margin-bottom: 20px; text-shadow:0 0 10px #000;">RESULTADO: <span style="color:#fff">${total}</span></div>`;
         
         if(ganadores.length > 0) {
             document.getElementById('win-title').innerText = "¡VICTORIA!";
             document.getElementById('win-title').style.color = "#2ecc71";
             html += ganadores.map(w => `🏆 ${w.name}`).join('<br>');
         } else {
-            document.getElementById('win-title').innerText = "DERROTA COLECTIVA";
+            document.getElementById('win-title').innerText = "LA MAZMORRA GANA";
             document.getElementById('win-title').style.color = "#e74c3c";
         }
         if(casiGanadores.length > 0) {
-            html += `<div class="casi-miss" style="margin-top: 25px; font-size: 1.5rem; border-top: 1px dashed #555; padding-top:10px;">¡POR LOS PELOS! (±1):</div>`;
-            html += casiGanadores.map(w => `<span style="color:#ff9900">😅 ${w.name} (Apostó ${w.cantidad})</span>`).join('<br>');
+            html += `<div style="margin-top: 30px; font-size: 1.6rem; border-top: 1px dashed #555; padding-top:15px; color:#ff9900;">¡CASUALIDADES DEL DESTINO! (±1):</div>`;
+            html += casiGanadores.map(w => `😅 ${w.name} (Puso ${w.cantidad})`).join('<br>');
         }
         list.innerHTML = html;
         document.getElementById('btn-seed').style.display = 'block';
