@@ -6,126 +6,201 @@
     <title>Dungeon Seed Lotto 🏰</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=VT323&display=swap');
+
         :root {
-            --gold: #ffd700;
-            --dark-red: #8b0000;
-            --bg: #121212;
+            --gold: #ffcc00;
+            --gold-glow: rgba(255, 204, 0, 0.4);
+            --stone: #2c2c2c;
+            --wall: #444;
+            --bg: #0a0a0a;
+            --accent: #e74c3c;
         }
 
         body {
             background-color: var(--bg);
-            color: #e0e0e0;
-            font-family: 'Courier New', Courier, monospace;
+            color: #eee;
+            font-family: 'VT323', monospace;
             margin: 0;
+            overflow-x: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
         }
 
-        #game-container {
-            width: 90%;
-            max-width: 600px;
-            border: 4px double #555;
-            padding: 20px;
-            background: #1a1a1a;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-            text-align: center;
+        /* Efecto de Escáner Retro */
+        body::before {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
         }
 
-        h1 { color: var(--gold); text-shadow: 2px 2px #000; }
+        #game-container {
+            width: 95%;
+            max-width: 800px;
+            background: #151515;
+            border: 4px solid var(--wall);
+            outline: 2px solid var(--gold);
+            outline-offset: -10px;
+            padding: 40px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            font-family: 'Cinzel', serif;
+            color: var(--gold);
+            font-size: 3rem;
+            margin: 0;
+            text-shadow: 0 0 20px var(--gold-glow);
+            letter-spacing: 5px;
+        }
+
         .hidden { display: none; }
 
+        /* Botones Juicy */
         button {
-            background: #444;
-            color: white;
+            background: var(--stone);
+            color: var(--gold);
             border: 2px solid var(--gold);
-            padding: 10px 20px;
+            padding: 12px 24px;
+            font-size: 1.5rem;
             cursor: pointer;
-            font-family: inherit;
-            font-weight: bold;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-family: 'VT323', monospace;
             margin: 10px;
+            text-transform: uppercase;
         }
 
-        button:hover { background: var(--gold); color: black; }
+        button:hover {
+            transform: scale(1.1);
+            background: var(--gold);
+            color: black;
+            box-shadow: 0 0 15px var(--gold);
+        }
+
+        button:active { transform: scale(0.9); }
 
         input {
+            background: #000;
+            border: 1px solid var(--gold);
+            color: var(--gold);
             padding: 10px;
-            background: #222;
-            border: 1px solid #555;
-            color: white;
-            margin: 5px;
-            width: 80%;
+            font-size: 1.2rem;
+            text-align: center;
+            width: 200px;
+            margin-bottom: 10px;
         }
 
-        #seed-box { font-size: 2.5rem; color: var(--gold); margin: 20px 0; letter-spacing: 5px; }
-        
+        /* Mazmorra Visual mejorada */
         #dungeon-visual {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 20px;
-            min-height: 50px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            min-height: 100px;
         }
 
         .room {
-            width: 40px;
-            height: 40px;
-            background: var(--dark-red);
-            border: 2px solid white;
-            animation: spawn 0.4s ease forwards;
+            width: 60px;
+            height: 60px;
+            background: var(--stone);
+            border: 3px solid #555;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: roomAppear 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            box-shadow: inset 0 0 10px #000;
         }
 
-        @keyframes spawn {
-            from { transform: scale(0) rotate(90deg); opacity: 0; }
-            to { transform: scale(1) rotate(0deg); opacity: 1; }
+        /* Conectores */
+        .room::after {
+            content: '';
+            position: absolute;
+            background: var(--wall);
+            z-index: -1;
         }
 
+        .room.connected-r::after { width: 15px; height: 6px; right: -15px; top: 27px; }
+
+        @keyframes roomAppear {
+            0% { transform: scale(0) rotate(-45deg); opacity: 0; }
+            70% { transform: scale(1.2) rotate(10deg); }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        /* Leaderboard */
         #leaderboard {
-            margin-top: 30px;
-            border-top: 1px solid #444;
-            text-align: left;
+            margin-top: 40px;
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-left: 4px solid var(--gold);
         }
 
-        ul { list-style: none; padding: 0; }
-        li { padding: 8px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; }
+        #list-bets li {
+            font-size: 1.4rem;
+            padding: 5px 0;
+            border-bottom: 1px dashed #444;
+            display: flex;
+            justify-content: space-between;
+        }
+
         .bet-val { color: var(--gold); font-weight: bold; }
+
+        /* Efectos Especiales */
+        .shake { animation: shake 0.3s; }
+        @keyframes shake {
+            0% { transform: translate(1px, 1px); }
+            20% { transform: translate(-3px, 0px); }
+            40% { transform: translate(3px, 2px); }
+            100% { transform: translate(0, 0); }
+        }
     </style>
 </head>
 <body>
 
 <div id="game-container">
-    <h1>🏰 SEED-LOTTO 🏰</h1>
+    <h1>DUNGEON LOTTO</h1>
+    <div style="color: var(--gold); margin-bottom: 20px;">— CRIPTAS DEL AZAR —</div>
 
     <div id="view-player" class="hidden">
-        <p>Introduce tu nombre y tu apuesta:</p>
-        <input type="text" id="p-name" placeholder="Tu nombre o Nick">
-        <input type="number" id="p-bet" placeholder="¿Cuántas habitaciones?">
-        <button onclick="enviarApuesta()">ENVIAR APUESTA</button>
-        <p id="msg-ok" style="color: var(--gold);"></p>
+        <input type="text" id="p-name" placeholder="NOMBRE DEL HÉROE"><br>
+        <input type="number" id="p-bet" placeholder="APUESTA HABITACIONES"><br>
+        <button onclick="enviarApuesta()">ENTRAR EN LA MAZMORRA</button>
+        <p id="msg-ok"></p>
     </div>
 
     <div id="view-host" class="hidden">
-        <div id="seed-box">SEED: <span id="display-seed">???</span></div>
-        
-        <button onclick="nuevaRonda()">GENERAR SEED</button>
-        <button id="btn-reveal" onclick="revelar()" style="display:none">REVELAR RESULTADO</button>
+        <div id="seed-box" style="font-size: 2rem; border: 1px solid var(--gold); display: inline-block; padding: 10px 30px;">
+            SEED: <span id="display-seed" style="color: var(--gold);">???</span>
+        </div>
+        <br>
+        <button onclick="nuevaRonda()">NUEVA EXPEDICIÓN</button>
+        <button id="btn-reveal" onclick="revelar()" style="display:none">REVELAR MAPA</button>
         
         <div id="dungeon-visual"></div>
 
         <div id="leaderboard">
-            <h3>APUESTAS EN TIEMPO REAL:</h3>
+            <div style="color: var(--gold); margin-bottom: 10px;">EXPEDICIONARIOS ACTUALES:</div>
             <ul id="list-bets"></ul>
         </div>
     </div>
 </div>
 
 <script>
-    // Configuración con tus claves reales
     const SB_URL = 'https://mzlamrxvtvxbuamyfplz.supabase.co';
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16bGFtcnh2dHZ4YnVhbXlmcGx6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNTAxNjEsImV4cCI6MjA5MjkyNjE2MX0.fdebTvX68sDHUbIjCFDhfipauXap4qabWko7U8gLyxg';
-    
     const miSupabase = supabase.createClient(SB_URL, SB_KEY);
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -149,7 +224,6 @@
         document.getElementById('dungeon-visual').innerHTML = "";
         document.getElementById('btn-reveal').style.display = 'inline-block';
         
-        // Limpiar apuestas para nueva partida
         await miSupabase.from('apuestas').delete().neq('id', 0);
         document.getElementById('list-bets').innerHTML = "";
     }
@@ -157,20 +231,15 @@
     async function enviarApuesta() {
         const valNombre = document.getElementById('p-name').value;
         const valApuesta = document.getElementById('p-bet').value;
+        if(!valNombre || !valApuesta) return alert("Héroe, pon tu nombre y apuesta.");
 
-        if(!valNombre || !valApuesta) return alert("Escribe tu nombre y apuesta");
-
-        // INSERTANDO USANDO 'name' (igual que en tu tabla)
         const { error } = await miSupabase
             .from('apuestas')
             .insert([{ name: valNombre, cantidad: parseInt(valApuesta) }]);
 
         if (!error) {
-            document.getElementById('msg-ok').innerText = "✅ ¡Registrado! Mira la pizarra.";
+            document.getElementById('msg-ok').innerHTML = "✅ APUESTA SELLADA CON SANGRE";
             document.getElementById('p-bet').value = "";
-        } else {
-            console.error(error);
-            alert("Error al enviar. Revisa las políticas RLS en Supabase.");
         }
     }
 
@@ -188,12 +257,25 @@
     function animarMazmorra(num) {
         const contenedor = document.getElementById('dungeon-visual');
         contenedor.innerHTML = "";
+        
         for(let i=0; i<num; i++) {
             setTimeout(() => {
                 const sala = document.createElement('div');
-                sala.className = 'room';
+                sala.className = 'room connected-r';
+                
+                // Icono aleatorio de sala (tesoro, enemigo, vacío)
+                const randomIcon = Math.random();
+                if(randomIcon > 0.8) sala.innerHTML = "💰";
+                else if(randomIcon > 0.6) sala.innerHTML = "💀";
+                else sala.innerHTML = "🪨";
+
                 contenedor.appendChild(sala);
-            }, i * 200);
+                
+                // Efecto de vibración en el contenedor cada vez que aparece una sala
+                document.getElementById('game-container').classList.add('shake');
+                setTimeout(() => document.getElementById('game-container').classList.remove('shake'), 200);
+                
+            }, i * 300);
         }
     }
 
@@ -202,8 +284,8 @@
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'apuestas' }, payload => {
                 const lista = document.getElementById('list-bets');
                 const item = document.createElement('li');
-                // LEYENDO 'name' (igual que en tu tabla)
-                item.innerHTML = `<span>👤 ${payload.new.name}</span> <span class="bet-val">${payload.new.cantidad} habs</span>`;
+                item.style.animation = "roomAppear 0.4s ease forwards";
+                item.innerHTML = `<span>👤 ${payload.new.name}</span> <span class="bet-val">${payload.new.cantidad} HAB</span>`;
                 lista.appendChild(item);
             })
             .subscribe();
