@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dungeon Lotto: Strategy Edition 🏰</title>
+    <title>Dungeon Lotto: Slot Machine Edition 🏰</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
@@ -58,6 +58,23 @@
         }
         .controls { padding: 15px; background: #1a1a1a; display: flex; justify-content: center; gap: 20px; border-top: 1px solid var(--gold); z-index: 10; }
         
+        /* --- ESTILOS DE LA TRAGAPERRAS --- */
+        #seed-tag { display: flex; flex-direction: column; align-items: center; min-width: 250px; }
+        .slot-machine { 
+            display: flex; gap: 10px; margin-bottom: 5px; 
+        }
+        .slot-box {
+            width: 45px; height: 55px; background: #000; border: 2px solid #555;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 3rem; font-weight: bold; color: #fff;
+            box-shadow: inset 0 0 10px rgba(255,255,255,0.2);
+            transition: all 0.2s;
+        }
+        /* Efectos al detenerse */
+        .slot-box.jackpot { border-color: #e74c3c; color: #e74c3c; text-shadow: 0 0 20px #e74c3c; box-shadow: inset 0 0 20px rgba(231, 76, 60, 0.5); animation: pulse 1s infinite; }
+        .slot-box.bonus { border-color: var(--gold); color: var(--gold); text-shadow: 0 0 15px var(--gold); box-shadow: inset 0 0 15px rgba(255, 204, 0, 0.4); }
+        .slot-box.normal { border-color: #888; color: #ccc; }
+
         .room {
             position: absolute; width: 45px; height: 45px; background: #2a2a2a; border: 2px solid var(--wall);
             display: flex; align-items: center; justify-content: center; font-size: 20px; z-index: 10;
@@ -77,7 +94,7 @@
             display: inline-block; min-width: 80%; line-height: 1.5;
         }
 
-        #bet-timer { color: #e74c3c; font-size: 1.2rem; font-weight: bold; }
+        #bet-timer { color: #e74c3c; font-size: 1.2rem; font-weight: bold; margin-top: 5px; height: 20px;}
 
         button { background: #222; color: var(--gold); border: 2px solid var(--gold); padding: 10px 25px; font-family: 'VT323'; font-size: 1.5rem; cursor: pointer; transition: 0.2s;}
         button:hover { background: var(--gold); color: #000; box-shadow: 0 0 10px var(--gold);}
@@ -88,7 +105,7 @@
         @keyframes shake { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(4px, 4px); } }
         
         .casi-miss { color: #ff9900; animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
     </style>
 </head>
 <body>
@@ -106,9 +123,14 @@
         <h1>DUNGEON MASTER LOTTO</h1>
         <div id="record-display" style="display:none;">🏆 RÉCORD: <span id="r-val">0</span> <span style="color:#888;">(Seed <span id="r-seed">---</span>)</span></div>
         <div id="room-counter" style="color:var(--gold);">SALAS: 0</div>
-        <div id="seed-tag" style="color: #888; font-size: 1.5rem; display:flex; flex-direction:column; align-items:center;">
-            <span id="seed-letras">PREPARA TUS DADOS...</span>
-            <span id="seed-bono" style="font-size: 1rem; color: #e74c3c; margin-top: -5px;"></span>
+        
+        <div id="seed-tag">
+            <div class="slot-machine">
+                <div id="slot-1" class="slot-box normal">?</div>
+                <div id="slot-2" class="slot-box normal">?</div>
+                <div id="slot-3" class="slot-box normal">?</div>
+            </div>
+            <span id="seed-bono" style="font-size: 1.2rem; font-weight: bold; height: 20px;"></span>
             <span id="bet-timer"></span>
         </div>
     </header>
@@ -221,43 +243,87 @@
         return { total: totalFinal, log: textoFinal };
     }
 
+    // --- ANIMACIÓN DE TRAGAPERRAS ---
     async function nuevaRonda() {
+        document.getElementById('btn-seed').disabled = true; // Evitar spam de clics
         const letras = ['A', 'B', 'C'];
         let seed = "";
         for(let i=0; i<3; i++) seed += letras[Math.floor(Math.random() * 3)];
         window.currentSeed = seed;
+
+        // Limpieza de UI
+        document.getElementById('dungeon-canvas').innerHTML = "";
+        document.getElementById('room-counter').innerText = "SALAS: 0";
+        document.getElementById('winner-banner').style.display = 'none';
+        document.getElementById('seed-bono').innerText = "";
+        document.getElementById('bet-timer').innerText = "";
         
+        let slot1 = document.getElementById('slot-1');
+        let slot2 = document.getElementById('slot-2');
+        let slot3 = document.getElementById('slot-3');
+        
+        // Reset de clases CSS
+        slot1.className = "slot-box normal";
+        slot2.className = "slot-box normal";
+        slot3.className = "slot-box normal";
+
+        await miSupabase.from('apuestas').delete().neq('id', 0);
+        document.getElementById('list-bets').innerHTML = "";
+
+        // Animación de giro
+        let spins = 0;
+        let spinInterval = setInterval(() => {
+            slot1.innerText = letras[Math.floor(Math.random() * 3)];
+            slot2.innerText = letras[Math.floor(Math.random() * 3)];
+            slot3.innerText = letras[Math.floor(Math.random() * 3)];
+            spins++;
+
+            // Parar a los 2 segundos (aprox 30 frames a 60ms)
+            if (spins > 30) {
+                clearInterval(spinInterval);
+                slot1.innerText = seed[0];
+                slot2.innerText = seed[1];
+                slot3.innerText = seed[2];
+                aplicarEstilosBono(seed);
+            }
+        }, 60);
+    }
+
+    function aplicarEstilosBono(seed) {
         let counts = { 'A':0, 'B':0, 'C':0 };
         for(let l of seed) counts[l]++;
         
-        let tagSeed = document.getElementById('seed-letras');
+        let slot1 = document.getElementById('slot-1');
+        let slot2 = document.getElementById('slot-2');
+        let slot3 = document.getElementById('slot-3');
         let tagBono = document.getElementById('seed-bono');
         
+        // Asignar clases visuales
         if(counts['A']==3||counts['B']==3||counts['C']==3) {
-            tagSeed.innerHTML = `SEED: ${seed}`;
-            tagSeed.style = "color: #e74c3c; font-weight: bold; text-shadow: 0 0 10px red; font-size: 2.5rem;";
+            slot1.className = "slot-box jackpot"; slot2.className = "slot-box jackpot"; slot3.className = "slot-box jackpot";
             tagBono.innerText = "¡ALERTA: JACKPOT x3!";
+            tagBono.style.color = "#e74c3c";
         } else if(counts['A']==2||counts['B']==2||counts['C']==2) {
-            tagSeed.innerHTML = `SEED: ${seed}`;
-            tagSeed.style = "color: var(--gold); text-shadow: 0 0 5px var(--gold); font-size: 2.5rem;";
-            tagBono.innerText = "BONUS: PAREJA x2 ACTIVA";
+            let letraDoble = Object.keys(counts).find(k => counts[k] === 2);
+            if(seed[0] === letraDoble) slot1.className = "slot-box bonus";
+            if(seed[1] === letraDoble) slot2.className = "slot-box bonus";
+            if(seed[2] === letraDoble) slot3.className = "slot-box bonus";
+            tagBono.innerText = `BONUS: PAREJA [${letraDoble}] x2`;
+            tagBono.style.color = "var(--gold)";
         } else {
-            tagSeed.innerHTML = `SEED: ${seed}`;
-            tagSeed.style = "color: #fff; font-size: 2.5rem;";
             tagBono.innerText = "MODO NORMAL";
             tagBono.style.color = "#888";
         }
 
-        document.getElementById('dungeon-canvas').innerHTML = "";
-        document.getElementById('room-counter').innerText = "SALAS: 0";
-        document.getElementById('winner-banner').style.display = 'none';
+        // Mostrar botones e iniciar tiempo
         document.getElementById('btn-reveal').style.display = 'block';
         document.getElementById('btn-seed').style.display = 'none';
+        document.getElementById('btn-seed').disabled = false;
         
-        await miSupabase.from('apuestas').delete().neq('id', 0);
-        document.getElementById('list-bets').innerHTML = "";
+        iniciarTemporizador();
+    }
 
-        // Iniciar cuenta atrás para apostar
+    function iniciarTemporizador() {
         let timeLeft = 30;
         document.getElementById('bet-timer').innerText = "TIEMPO PARA APOSTAR: " + timeLeft + "s";
         clearInterval(timerInterval);
