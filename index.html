@@ -34,10 +34,8 @@
         }
 
         h1 { color: var(--gold); text-shadow: 2px 2px #000; }
-
         .hidden { display: none; }
 
-        /* Estilo Botones */
         button {
             background: #444;
             color: white;
@@ -51,7 +49,6 @@
 
         button:hover { background: var(--gold); color: black; }
 
-        /* Vistas */
         input {
             padding: 10px;
             background: #222;
@@ -61,7 +58,6 @@
             width: 80%;
         }
 
-        /* Visualización de la Mazmorra */
         #seed-box { font-size: 2.5rem; color: var(--gold); margin: 20px 0; letter-spacing: 5px; }
         
         #dungeon-visual {
@@ -86,7 +82,6 @@
             to { transform: scale(1) rotate(0deg); opacity: 1; }
         }
 
-        /* Lista de Jugadores */
         #leaderboard {
             margin-top: 30px;
             border-top: 1px solid #444;
@@ -94,7 +89,7 @@
         }
 
         ul { list-style: none; padding: 0; }
-        li { padding: 5px; border-bottom: 1px id #333; display: flex; justify-content: space-between; }
+        li { padding: 8px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; }
         .bet-val { color: var(--gold); font-weight: bold; }
     </style>
 </head>
@@ -128,21 +123,24 @@
 
 <script>
     // --- CONFIGURACIÓN SUPABASE ---
-    // SUSTITUYE ESTO CON TUS DATOS DE SUPABASE
     const SB_URL = 'https://mzlamrxvtvxbuamyfplz.supabase.co';
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16bGFtcnh2dHZ4YnVhbXlmcGx6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNTAxNjEsImV4cCI6MjA5MjkyNjE2MX0.fdebTvX68sDHUbIjCFDhfipauXap4qabWko7U8gLyxg';
-    const supabase = supabase.createClient(SB_URL, SB_KEY);
+    
+    // IMPORTANTE: Usamos 'miSupabase' para no entrar en conflicto con la librería
+    const miSupabase = supabase.createClient(SB_URL, SB_KEY);
 
     const urlParams = new URLSearchParams(window.location.search);
     const soyHost = urlParams.get('host') === 'true';
 
-    // Iniciar Vistas
-    if (soyHost) {
-        document.getElementById('view-host').classList.remove('hidden');
-        escucharApuestas();
-    } else {
-        document.getElementById('view-player').classList.remove('hidden');
-    }
+    // Iniciar vistas al cargar
+    window.addEventListener('DOMContentLoaded', () => {
+        if (soyHost) {
+            document.getElementById('view-host').classList.remove('hidden');
+            escucharApuestas();
+        } else {
+            document.getElementById('view-player').classList.remove('hidden');
+        }
+    });
 
     // --- LÓGICA DEL JUEGO ---
 
@@ -155,8 +153,8 @@
         document.getElementById('dungeon-visual').innerHTML = "";
         document.getElementById('btn-reveal').style.display = 'inline-block';
         
-        // Borrar apuestas anteriores en la DB
-        await supabase.from('apuestas').delete().neq('id', 0);
+        // Limpiar base de datos para la nueva ronda
+        await miSupabase.from('apuestas').delete().neq('id', 0);
         document.getElementById('list-bets').innerHTML = "";
     }
 
@@ -164,15 +162,18 @@
         const nombre = document.getElementById('p-name').value;
         const apuesta = document.getElementById('p-bet').value;
 
-        if(!nombre || !apuesta) return alert("Rellena todo, fiera.");
+        if(!nombre || !apuesta) return alert("Rellena todos los campos.");
 
-        const { error } = await supabase
+        const { error } = await miSupabase
             .from('apuestas')
             .insert([{ nombre: nombre, cantidad: parseInt(apuesta) }]);
 
         if (!error) {
-            document.getElementById('msg-ok').innerText = "✅ Apuesta registrada.";
+            document.getElementById('msg-ok').innerText = "✅ Apuesta enviada correctamente.";
             document.getElementById('p-bet').value = "";
+        } else {
+            console.error(error);
+            alert("Error al enviar. Revisa las políticas RLS en Supabase.");
         }
     }
 
@@ -180,11 +181,11 @@
         const seed = document.getElementById('display-seed').innerText;
         let total = 0;
 
-        // AZAR PURO: Los dados de la Seed
+        // Azar Puro: Cada letra es un dado distinto
         seed.split('').forEach(letra => {
-            if(letra === 'A') total += Math.floor(Math.random() * 4) + 1; // D4
-            if(letra === 'B') total += Math.floor(Math.random() * 6) + 1; // D6
-            if(letra === 'C') total += Math.floor(Math.random() * 8) + 1; // D8
+            if(letra === 'A') total += Math.floor(Math.random() * 4) + 1; // Dado 4
+            if(letra === 'B') total += Math.floor(Math.random() * 6) + 1; // Dado 6
+            if(letra === 'C') total += Math.floor(Math.random() * 8) + 1; // Dado 8
         });
 
         animarMazmorra(total);
@@ -202,9 +203,8 @@
         }
     }
 
-    // Escuchar cambios en la base de datos (Realtime)
     function escucharApuestas() {
-        supabase.channel('cambios-apuestas')
+        miSupabase.channel('cambios-apuestas')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'apuestas' }, payload => {
                 const lista = document.getElementById('list-bets');
                 const item = document.createElement('li');
