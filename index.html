@@ -122,7 +122,7 @@
 </div>
 
 <script>
-    // --- CONFIGURACIÓN SUPABASE ---
+    // Configuración con tus claves reales
     const SB_URL = 'https://mzlamrxvtvxbuamyfplz.supabase.co';
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16bGFtcnh2dHZ4YnVhbXlmcGx6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNTAxNjEsImV4cCI6MjA5MjkyNjE2MX0.fdebTvX68sDHUbIjCFDhfipauXap4qabWko7U8gLyxg';
     
@@ -149,27 +149,28 @@
         document.getElementById('dungeon-visual').innerHTML = "";
         document.getElementById('btn-reveal').style.display = 'inline-block';
         
+        // Limpiar apuestas para nueva partida
         await miSupabase.from('apuestas').delete().neq('id', 0);
         document.getElementById('list-bets').innerHTML = "";
     }
 
     async function enviarApuesta() {
-        const nombreVal = document.getElementById('p-name').value;
-        const apuestaVal = document.getElementById('p-bet').value;
+        const valNombre = document.getElementById('p-name').value;
+        const valApuesta = document.getElementById('p-bet').value;
 
-        if(!nombreVal || !apuestaVal) return alert("Rellena todos los campos.");
+        if(!valNombre || !valApuesta) return alert("Escribe tu nombre y apuesta");
 
-        // AQUÍ HEMOS CAMBIADO 'nombre' POR 'name' PARA QUE COINCIDA CON TU SUPABASE
+        // INSERTANDO USANDO 'name' (igual que en tu tabla)
         const { error } = await miSupabase
             .from('apuestas')
-            .insert([{ name: nombreVal, cantidad: parseInt(apuestaVal) }]);
+            .insert([{ name: valNombre, cantidad: parseInt(valApuesta) }]);
 
         if (!error) {
-            document.getElementById('msg-ok').innerText = "✅ Apuesta enviada correctamente.";
+            document.getElementById('msg-ok').innerText = "✅ ¡Registrado! Mira la pizarra.";
             document.getElementById('p-bet').value = "";
         } else {
             console.error(error);
-            alert("Error al enviar. Revisa las políticas RLS.");
+            alert("Error al enviar. Revisa las políticas RLS en Supabase.");
         }
     }
 
@@ -201,7 +202,7 @@
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'apuestas' }, payload => {
                 const lista = document.getElementById('list-bets');
                 const item = document.createElement('li');
-                // AQUÍ TAMBIÉN CAMBIAMOS A 'payload.new.name'
+                // LEYENDO 'name' (igual que en tu tabla)
                 item.innerHTML = `<span>👤 ${payload.new.name}</span> <span class="bet-val">${payload.new.cantidad} habs</span>`;
                 lista.appendChild(item);
             })
