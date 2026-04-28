@@ -3,14 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dungeon Lotto: JUICY Slot Edition 🎰🏰</title>
+    <title>Dungeon Lotto: The Live Show 🎬🏰</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
-        :root {
-            --gold: #ffcc00; --stone: #1a1a1a; --wall: #333; --corridor: #444; --bg: #050505;
-        }
+        :root { --gold: #ffcc00; --stone: #1a1a1a; --wall: #333; --corridor: #444; --bg: #050505; }
 
         body {
             background-color: var(--bg); color: #eee; font-family: 'VT323', monospace;
@@ -19,13 +17,11 @@
         }
 
         body::before {
-            content: " "; display: block; position: fixed;
-            top: 0; left: 0; bottom: 0; right: 0;
+            content: " "; display: block; position: fixed; top: 0; left: 0; bottom: 0; right: 0;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
             z-index: 500; background-size: 100% 3px, 3px 100%; pointer-events: none;
         }
 
-        /* EL FLASH DEL JACKPOT */
         #flash-overlay {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: #fff; z-index: 9999; opacity: 0; pointer-events: none;
@@ -45,7 +41,7 @@
         }
 
         h1 { margin: 0; color: var(--gold); font-size: 2.2rem; text-shadow: 0 0 10px var(--gold); }
-        #room-counter { font-size: 2rem; color: #fff; border: 2px solid var(--gold); padding: 5px 15px; background: #000; }
+        #room-counter { font-size: 2.5rem; color: #fff; border: 2px solid var(--gold); padding: 5px 20px; background: #000; font-weight: bold; }
         
         body.is-host #view-player { display: none !important; }
         body.is-player #view-host { display: none !important; }
@@ -54,82 +50,48 @@
         #view-player { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; gap: 20px; z-index: 10; }
 
         #dungeon-canvas { flex-grow: 1; position: relative; }
+        
+        /* PANELES LATERALES */
         #side-panel {
-            position: absolute; right: 20px; top: 20px; width: 220px; background: rgba(0,0,0,0.8);
+            position: absolute; right: 20px; top: 20px; width: 220px; background: rgba(0,0,0,0.85);
             border: 1px solid var(--gold); padding: 15px; max-height: 60%; overflow-y: auto; z-index: 100;
         }
+        
+        /* NUEVO HUD DE LOG EN DIRECTO */
+        #live-log {
+            position: absolute; left: 20px; top: 20px; width: 320px; background: rgba(0,0,0,0.9);
+            border: 2px dashed var(--gold); padding: 15px; font-size: 1.4rem; z-index: 100;
+            display: none; box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        }
+
         .controls { padding: 15px; background: #1a1a1a; display: flex; justify-content: center; gap: 20px; border-top: 1px solid var(--gold); z-index: 10; }
         
-        /* --- ESTILOS DE LA TRAGAPERRAS JUICY --- */
+        /* TRAGAPERRAS */
         #seed-tag { display: flex; flex-direction: column; align-items: center; min-width: 250px; }
         .slot-machine { display: flex; gap: 15px; margin-bottom: 5px; }
-        
         .slot-box {
             width: 55px; height: 65px; background: #050505; border: 3px solid #333;
             display: flex; justify-content: center; align-items: center;
             font-size: 4rem; font-weight: bold; color: #fff;
-            box-shadow: inset 0 0 15px rgba(0,0,0,1);
-            position: relative; overflow: hidden;
-            border-radius: 5px;
+            box-shadow: inset 0 0 15px rgba(0,0,0,1); border-radius: 5px; transition: 0.3s;
         }
-        
-        /* Efecto girando */
-        .slot-box.spinning {
-            color: #444; filter: blur(1.5px);
-            text-shadow: 0 10px 5px rgba(255,255,255,0.2), 0 -10px 5px rgba(255,255,255,0.2);
-        }
-        
-        /* Efecto Bloqueado */
-        .slot-box.locked {
-            animation: lockImpact 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-            border-color: #aaa;
-        }
+        .slot-box.spinning { color: #444; filter: blur(1.5px); text-shadow: 0 10px 5px rgba(255,255,255,0.2), 0 -10px 5px rgba(255,255,255,0.2); }
+        .slot-box.locked { animation: lockImpact 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; border-color: #aaa; }
+        .slot-box.active-roll { border-color: #2ecc71; box-shadow: 0 0 20px #2ecc71, inset 0 0 15px rgba(46, 204, 113, 0.3); transform: scale(1.1); z-index: 50; }
+        .slot-box.jackpot { border-color: #e74c3c; color: #e74c3c; text-shadow: 0 0 25px #e74c3c; animation: jackpotPulse 0.5s infinite alternate; }
+        .slot-box.bonus { border-color: var(--gold); color: var(--gold); text-shadow: 0 0 20px var(--gold); }
 
-        /* Efectos Finales (Bonos) */
-        .slot-box.jackpot { 
-            border-color: #e74c3c; color: #e74c3c; 
-            text-shadow: 0 0 25px #e74c3c; box-shadow: inset 0 0 30px rgba(231, 76, 60, 0.6); 
-            animation: jackpotPulse 0.5s infinite alternate; 
-        }
-        .slot-box.bonus { 
-            border-color: var(--gold); color: var(--gold); 
-            text-shadow: 0 0 20px var(--gold); box-shadow: inset 0 0 20px rgba(255, 204, 0, 0.4); 
-        }
+        @keyframes lockImpact { 0% { transform: scale(1.4) translateY(-15px); color: #fff; text-shadow: 0 0 20px #fff; } 100% { transform: scale(1) translateY(0); } }
+        @keyframes jackpotPulse { 0% { transform: scale(1); box-shadow: inset 0 0 20px rgba(231, 76, 60, 0.4); } 100% { transform: scale(1.1); box-shadow: inset 0 0 50px rgba(231, 76, 60, 0.9); } }
 
-        @keyframes lockImpact {
-            0% { transform: scale(1.4) translateY(-15px); color: #fff; text-shadow: 0 0 20px #fff; }
-            100% { transform: scale(1) translateY(0); }
-        }
-        @keyframes jackpotPulse {
-            0% { transform: scale(1); box-shadow: inset 0 0 20px rgba(231, 76, 60, 0.4); }
-            100% { transform: scale(1.1); box-shadow: inset 0 0 50px rgba(231, 76, 60, 0.9); }
-        }
-
-        /* Temblores de pantalla */
         .shake-small { animation: shakeSmall 0.15s; }
         @keyframes shakeSmall { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(3px, 5px); } }
-        
         .shake-heavy { animation: shakeHeavy 0.3s; }
         @keyframes shakeHeavy { 0%, 100% { transform: translate(0,0); } 25% { transform: translate(-8px, -5px); } 50% { transform: translate(8px, 5px); } 75% { transform: translate(-5px, 8px); } }
 
-        .room {
-            position: absolute; width: 45px; height: 45px; background: #2a2a2a; border: 2px solid var(--wall);
-            display: flex; align-items: center; justify-content: center; font-size: 20px; z-index: 10;
-            animation: appear 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
+        .room { position: absolute; width: 45px; height: 45px; background: #2a2a2a; border: 2px solid var(--wall); display: flex; align-items: center; justify-content: center; font-size: 20px; z-index: 10; animation: appear 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         .corridor { position: absolute; background: var(--corridor); z-index: 5; }
-
-        #winner-banner {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.95); border: 4px double var(--gold); padding: 30px;
-            text-align: center; z-index: 1000; display: none; min-width: 450px; box-shadow: 0 0 50px rgba(0,0,0,1);
-        }
-        #math-log {
-            font-size: 1.5rem; color: #fff; margin: 15px auto; padding: 15px;
-            border: 1px dashed var(--gold); background: #000; text-align: left;
-            display: inline-block; min-width: 80%; line-height: 1.5;
-        }
-
+        #winner-banner { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.95); border: 4px double var(--gold); padding: 30px; text-align: center; z-index: 1000; display: none; min-width: 450px; box-shadow: 0 0 50px rgba(0,0,0,1); }
         #bet-timer { color: #e74c3c; font-size: 1.4rem; font-weight: bold; margin-top: 5px; height: 25px;}
 
         button { background: #222; color: var(--gold); border: 2px solid var(--gold); padding: 10px 25px; font-family: 'VT323'; font-size: 1.5rem; cursor: pointer; transition: 0.2s;}
@@ -154,7 +116,7 @@
 <div id="game-container">
     <header>
         <h1>DUNGEON LOTTO</h1>
-        <div id="room-counter" style="color:var(--gold);">SALAS: 0</div>
+        <div id="room-counter">SALAS: 0</div>
         
         <div id="seed-tag">
             <div class="slot-machine">
@@ -170,9 +132,13 @@
     <div id="view-host">
         <div id="dungeon-canvas"></div>
         
+        <div id="live-log">
+            <h3 style="margin:0 0 10px 0; color:var(--gold); border-bottom:1px solid var(--gold);">📡 CRÓNICA DE FORJA</h3>
+            <div id="log-content">Esperando a los dioses...</div>
+        </div>
+        
         <div id="winner-banner">
             <h2 id="win-title" style="color: var(--gold); margin-top: 0; font-size: 3rem;"></h2>
-            <div id="math-log"></div>
             <div id="winner-list" style="font-size: 1.8rem; margin: 20px 0; color: #fff;"></div>
             <button onclick="cerrarBanner()">SIGUIENTE VÍCTIMA</button>
         </div>
@@ -184,7 +150,7 @@
 
         <div class="controls">
             <button id="btn-seed" onclick="nuevaRonda()">TIRAR DE LA PALANCA</button>
-            <button id="btn-reveal" style="display:none" onclick="revelar()">FORJAR MAZMORRA</button>
+            <button id="btn-reveal" style="display:none" onclick="forjarMazmorraEnVivo()">FORJAR MAZMORRA</button>
         </div>
     </div>
 
@@ -202,16 +168,20 @@
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16bGFtcnh2dHZ4YnVhbXlmcGx6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNTAxNjEsImV4cCI6MjA5MjkyNjE2MX0.fdebTvX68sDHUbIjCFDhfipauXap4qabWko7U8gLyxg';
     const miSupabase = supabase.createClient(SB_URL, SB_KEY);
 
+    // Herramienta mágica para pausar la ejecución y dar dramatismo
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+    let roomsData = [];
+    const tileSize = 50;
+    let timerInterval;
+    let globalRoomCount = 0;
+
     window.onload = () => {
         if (document.body.classList.contains('is-host')) {
             cargarApuestas();
             escucharApuestas();
         }
     };
-
-    let roomsData = [];
-    const tileSize = 50;
-    let timerInterval;
 
     async function cargarApuestas() {
         const { data } = await miSupabase.from('apuestas').select('*');
@@ -227,7 +197,7 @@
         }
     }
 
-    // --- ANIMACIÓN JUICY DE LA TRAGAPERRAS ---
+    // --- ANIMACIÓN DE TRAGAPERRAS ---
     async function nuevaRonda() {
         document.getElementById('btn-seed').disabled = true;
         const letras = ['A', 'B', 'C'];
@@ -238,26 +208,21 @@
         document.getElementById('dungeon-canvas').innerHTML = "";
         document.getElementById('room-counter').innerText = "SALAS: 0";
         document.getElementById('winner-banner').style.display = 'none';
+        document.getElementById('live-log').style.display = 'none';
         document.getElementById('seed-bono').innerText = "";
         document.getElementById('bet-timer').innerText = "";
         
         let slots = [document.getElementById('slot-1'), document.getElementById('slot-2'), document.getElementById('slot-3')];
-        
-        slots.forEach(s => {
-            s.className = "slot-box spinning"; // Activa el blur
-            s.innerText = "?";
-        });
+        slots.forEach(s => { s.className = "slot-box spinning"; s.innerText = "?"; });
 
         await miSupabase.from('apuestas').delete().neq('id', 0);
         document.getElementById('list-bets').innerHTML = "";
 
-        // Tiempos de parada escalonados (El suspense)
         const stopTimes = [1200, 2200, 3500]; 
 
         slots.forEach((slot, index) => {
             let spinInterval = setInterval(() => {
                 slot.innerText = letras[Math.floor(Math.random() * 3)];
-                // Simula movimiento vertical rapido
                 slot.style.transform = `translateY(${Math.random() * 10 - 5}px)`; 
             }, 40);
 
@@ -265,17 +230,15 @@
                 clearInterval(spinInterval);
                 slot.style.transform = `translateY(0)`;
                 slot.innerText = seed[index];
-                slot.className = "slot-box locked"; // El golpe visual
+                slot.className = "slot-box locked"; 
                 
-                // Efecto de sonido/temblor visual
                 if(index < 2) {
                     document.getElementById('game-container').classList.add('shake-small');
                     setTimeout(()=> document.getElementById('game-container').classList.remove('shake-small'), 150);
                 } else {
-                    // La última letra tiembla fuerte
                     document.getElementById('game-container').classList.add('shake-heavy');
                     setTimeout(()=> document.getElementById('game-container').classList.remove('shake-heavy'), 300);
-                    setTimeout(()=> aplicarEstilosBono(seed), 400); // Evalúa la jugada justo despues
+                    setTimeout(()=> aplicarEstilosBono(seed), 400); 
                 }
             }, stopTimes[index]);
         });
@@ -290,27 +253,22 @@
         
         if(counts['A']==3||counts['B']==3||counts['C']==3) {
             slots.forEach(s => s.className = "slot-box jackpot");
-            tagBono.innerText = "¡JACKPOT x3!";
-            tagBono.style.color = "#e74c3c";
-            // Flash blanco en pantalla
+            tagBono.innerText = "¡JACKPOT x3!"; tagBono.style.color = "#e74c3c";
             let flash = document.getElementById('flash-overlay');
             flash.classList.add('flash-anim');
             setTimeout(() => flash.classList.remove('flash-anim'), 800);
         } else if(counts['A']==2||counts['B']==2||counts['C']==2) {
             let letraDoble = Object.keys(counts).find(k => counts[k] === 2);
             slots.forEach((s, i) => { if(seed[i] === letraDoble) s.className = "slot-box bonus"; else s.className = "slot-box"; });
-            tagBono.innerText = `BONUS: PAREJA [${letraDoble}] x2`;
-            tagBono.style.color = "var(--gold)";
+            tagBono.innerText = `BONUS: PAREJA [${letraDoble}] x2`; tagBono.style.color = "var(--gold)";
         } else {
             slots.forEach(s => s.className = "slot-box");
-            tagBono.innerText = "MODO NORMAL";
-            tagBono.style.color = "#888";
+            tagBono.innerText = "MODO NORMAL"; tagBono.style.color = "#888";
         }
 
         document.getElementById('btn-reveal').style.display = 'block';
         document.getElementById('btn-seed').style.display = 'none';
         document.getElementById('btn-seed').disabled = false;
-        
         iniciarTemporizador();
     }
 
@@ -323,92 +281,146 @@
             document.getElementById('bet-timer').innerText = "⏱️ TIEMPO: " + timeLeft + "s";
             if(timeLeft <= 0) {
                 clearInterval(timerInterval);
-                document.getElementById('bet-timer').innerText = "¡CERRADO!";
+                document.getElementById('bet-timer').innerText = "¡APUESTAS CERRADAS!";
             }
         }, 1000);
-    }
-
-    // --- MOTOR Y MATEMÁTICAS ---
-    function calcularTotalProcedural(seed) {
-        let counts = { 'A': 0, 'B': 0, 'C': 0 };
-        for(let l of seed) counts[l]++;
-        let esJackpot = (counts['A']===3 || counts['B']===3 || counts['C']===3);
-        let totalFinal = 0;
-        let letrasUnicas = [...new Set(seed.split(''))];
-        let desglose = []; 
-
-        for(let l of letrasUnicas) {
-            let caras = (l==='A') ? 4 : (l==='B') ? 6 : 8;
-            let apariciones = counts[l];
-            let subtotalLetra = 0;
-            let bloquesDados = []; 
-
-            for(let i=0; i<apariciones; i++) {
-                let tiradasDeEsteDado = [];
-                let tirada;
-                let sumaEsteDado = 0;
-                do {
-                    tirada = Math.floor(Math.random() * caras) + 1;
-                    sumaEsteDado += tirada;
-                    if(tirada === caras) tiradasDeEsteDado.push(tirada + "💥");
-                    else tiradasDeEsteDado.push(tirada);
-                } while(tirada === caras);
-                subtotalLetra += sumaEsteDado;
-                bloquesDados.push("[" + tiradasDeEsteDado.join(' + ') + "]");
-            }
-            let ecuacion = `<span style="color:var(--gold)">${l}:</span> ` + bloquesDados.join(' + '); 
-            if(!esJackpot && apariciones === 2) {
-                subtotalLetra *= 2; 
-                ecuacion = `(${ecuacion}) <span style="color:#2ecc71">x2</span>`;
-            }
-            totalFinal += subtotalLetra;
-            desglose.push(ecuacion);
-        }
-
-        let textoFinal = "";
-        if(esJackpot) {
-            textoFinal = `${desglose.join('<br>')}<br><span style="color:#555">----------------</span><br>Base: ${totalFinal} <span style="color:#e74c3c">x 3 (JACKPOT)</span> = <strong>${totalFinal * 3}</strong>`;
-            totalFinal *= 3;
-        } else {
-            textoFinal = `${desglose.join('<br>')}<br><span style="color:#555">----------------</span><br>Total = <strong>${totalFinal}</strong>`;
-        }
-        return { total: totalFinal, log: textoFinal };
     }
 
     async function enviarApuesta() {
         const n = document.getElementById('p-name').value;
         const b = document.getElementById('p-bet').value;
-        if(!n || !b) return alert("Rellena todo.");
+        if(!n || !b) return alert("Faltan datos.");
         await miSupabase.from('apuestas').insert([{ name: n, cantidad: parseInt(b) }]);
         document.getElementById('msg-ok').innerText = "✅ ENVIADA";
         document.getElementById('p-bet').value = "";
         setTimeout(()=> document.getElementById('msg-ok').innerText = "", 3000);
     }
 
-    function revelar() {
+    // ==========================================
+    // EL NUEVO NÚCLEO: GENERACIÓN SECUENCIAL
+    // ==========================================
+    async function forjarMazmorraEnVivo() {
         clearInterval(timerInterval);
         document.getElementById('bet-timer').innerText = "";
         document.getElementById('btn-reveal').style.display = 'none';
-        let resultadoObj = calcularTotalProcedural(window.currentSeed);
-        window.resultadoLog = resultadoObj.log; 
-        generarMapaAnimado(resultadoObj.total);
-    }
-
-    function generarMapaAnimado(num) {
-        const canvas = document.getElementById('dungeon-canvas');
+        
+        let logUI = document.getElementById('live-log');
+        let logContent = document.getElementById('log-content');
+        logUI.style.display = 'block';
+        logContent.innerHTML = "";
+        
+        let seed = window.currentSeed;
+        let slots = [document.getElementById('slot-1'), document.getElementById('slot-2'), document.getElementById('slot-3')];
+        
+        // Colocar el castillo inicial
         roomsData = [];
+        globalRoomCount = 0;
+        const canvas = document.getElementById('dungeon-canvas');
         const startX = Math.floor(canvas.offsetWidth / 2 / tileSize) * tileSize;
         const startY = Math.floor(canvas.offsetHeight / 2 / tileSize) * tileSize;
         colocarRoom(startX, startY, "🏰", 0);
-        let i = 1;
-        function animarSiguiente() {
-            if(i >= num) {
-                setTimeout(() => {
-                    buscarGanadores(num);
-                    document.getElementById('btn-seed').style.display = 'block';
-                }, 1500);
-                return;
-            }
+
+        let totalSalasFinales = 0;
+        let basePorLetra = {A:0, B:0, C:0};
+        let counts = {A:0, B:0, C:0};
+        for(let l of seed) counts[l]++;
+
+        let lineasLog = []; // Guarda el histórico del texto
+
+        // FASE 1: Tirar dados uno a uno
+        for(let i=0; i<3; i++) {
+            let letra = seed[i];
+            let caras = (letra==='A') ? 4 : (letra==='B') ? 6 : 8;
+            
+            // Iluminar el dado actual
+            slots.forEach(s => s.classList.remove('active-roll'));
+            slots[i].classList.add('active-roll');
+
+            lineasLog.push(`<span style="color:#888">Tirando Slot ${i+1} [${letra} - D${caras}]...</span>`);
+            logContent.innerHTML = lineasLog.join('<br>');
+            await sleep(600); // Pausa dramática antes de tirar
+
+            let sumaDado = 0;
+            let tiradas = [];
+            let tirada;
+            
+            do {
+                tirada = Math.floor(Math.random() * caras) + 1;
+                sumaDado += tirada;
+                
+                if(tirada === caras) {
+                    tiradas.push(`<span style="color:#e74c3c; font-weight:bold">${tirada}💥</span>`);
+                    document.getElementById('game-container').classList.add('shake-heavy');
+                    setTimeout(()=> document.getElementById('game-container').classList.remove('shake-heavy'), 200);
+                } else {
+                    tiradas.push(tirada);
+                }
+
+                // Actualizar log en tiempo real
+                let textoTirada = `Slot ${i+1} [${letra}]: { ${tiradas.join(' + ')} }`;
+                lineasLog[lineasLog.length - 1] = textoTirada;
+                logContent.innerHTML = lineasLog.join('<br>');
+                
+                await sleep(500); // Pausa entre explosiones para que duela
+
+            } while(tirada === caras);
+
+            basePorLetra[letra] += sumaDado;
+            totalSalasFinales += sumaDado;
+
+            lineasLog[lineasLog.length - 1] = `<span style="color:var(--gold)">Slot ${i+1} [${letra}]:</span> { ${tiradas.join(' + ')} } = <strong>${sumaDado}</strong>`;
+            logContent.innerHTML = lineasLog.join('<br>');
+
+            // ¡Generar las salas de este dado!
+            await spawnSalasVisually(sumaDado, false);
+            
+            slots[i].classList.remove('active-roll');
+            await sleep(500); // Pausa antes de pasar al siguiente slot
+        }
+
+        // FASE 2: Multiplicadores (Frenesí)
+        let esJackpot = (counts['A']===3 || counts['B']===3 || counts['C']===3);
+        let letraDoble = Object.keys(counts).find(k => counts[k] === 2);
+
+        if(esJackpot) {
+            await sleep(800);
+            let salasExtra = totalSalasFinales * 2; // Sumamos x2 para que total sea x3
+            
+            let flash = document.getElementById('flash-overlay');
+            flash.classList.add('flash-anim');
+            setTimeout(() => flash.classList.remove('flash-anim'), 800);
+
+            lineasLog.push(`<hr><span style="color:#e74c3c; font-size:1.6rem;">🚨 ¡JACKPOT x3 ACTIVADO! 🚨<br>Inyectando ${salasExtra} salas...</span>`);
+            logContent.innerHTML = lineasLog.join('<br>');
+
+            await spawnSalasVisually(salasExtra, true); // True = Va muy rapido
+            totalSalasFinales *= 3;
+            
+        } else if (letraDoble) {
+            await sleep(800);
+            let salasExtra = basePorLetra[letraDoble]; // Sumamos la base otra vez
+            
+            lineasLog.push(`<hr><span style="color:var(--gold); font-size:1.4rem;">✨ BONUS PAREJA [${letraDoble}] x2 ✨<br>Añadiendo ${salasExtra} salas...</span>`);
+            logContent.innerHTML = lineasLog.join('<br>');
+
+            await spawnSalasVisually(salasExtra, true);
+            totalSalasFinales += salasExtra;
+        }
+
+        // FIN DEL JUEGO
+        lineasLog.push(`<br><div style="background:#fff; color:#000; text-align:center; padding:5px; font-weight:bold;">TOTAL FINAL: ${totalSalasFinales}</div>`);
+        logContent.innerHTML = lineasLog.join('<br>');
+
+        await sleep(1500);
+        buscarGanadores(totalSalasFinales);
+    }
+
+    // Generador secuencial de salas
+    async function spawnSalasVisually(cantidad, frenesi) {
+        let counterUI = document.getElementById('room-counter');
+        let container = document.getElementById('game-container');
+
+        for(let i=0; i<cantidad; i++) {
             let ok = false; let tries = 0;
             while(!ok && tries < 50) {
                 const parent = roomsData[Math.floor(Math.random() * roomsData.length)];
@@ -417,33 +429,22 @@
                 const nY = parent.y + (dir[1] * tileSize);
                 if(!roomsData.some(r => r.x === nX && r.y === nY)) {
                     colocarPasillo(parent.x, parent.y, nX, nY);
-                    colocarRoom(nX, nY, "🪨", i);
+                    colocarRoom(nX, nY, "🪨", globalRoomCount + 1);
                     ok = true;
                 }
                 tries++;
             }
-            document.getElementById('room-counter').innerText = "SALAS: " + (i + 1);
             
-            // Temblor en cada aparición de sala
-            document.getElementById('game-container').classList.add('shake-small');
-            setTimeout(() => document.getElementById('game-container').classList.remove('shake-small'), 50);
+            globalRoomCount++;
+            counterUI.innerText = "SALAS: " + globalRoomCount;
+            if(frenesi) counterUI.style.color = "#e74c3c";
             
-            i++;
-            let delay = 100;
-            if(i > 8) delay = 100 + ((i - 8) * 60);
-            if(delay > 900) delay = 900;
-            if(i >= Math.max(1, num - 2)) {
-                delay = 1200;
-                document.getElementById('room-counter').style.color = "#e74c3c";
-            }
-            setTimeout(animarSiguiente, delay);
-        }
-        if(num > 1) setTimeout(animarSiguiente, 100);
-        else {
-            setTimeout(() => {
-                buscarGanadores(num);
-                document.getElementById('btn-seed').style.display = 'block';
-            }, 1000);
+            container.classList.add('shake-small');
+            setTimeout(() => container.classList.remove('shake-small'), 50);
+
+            // Si es frenesí (multiplicador) va cagando leches, si no, es tenso
+            let delay = frenesi ? 30 : 150;
+            await sleep(delay);
         }
     }
 
@@ -472,13 +473,12 @@
     async function buscarGanadores(total) {
         const { data: b } = await miSupabase.from('apuestas').select('*');
         const list = document.getElementById('winner-list');
-        document.getElementById('math-log').innerHTML = window.resultadoLog; 
         document.getElementById('winner-banner').style.display = 'block';
         let ganadores = b.filter(a => parseInt(a.cantidad) === total);
         let casiGanadores = b.filter(a => Math.abs(parseInt(a.cantidad) - total) === 1);
         let html = "";
         if(ganadores.length > 0) {
-            document.getElementById('win-title').innerText = "¡VICTORIA ABSOLUTA!";
+            document.getElementById('win-title').innerText = "¡VICTORIA!";
             document.getElementById('win-title').style.color = "#2ecc71";
             html += ganadores.map(w => `🏆 ${w.name}`).join('<br>');
         } else {
@@ -490,6 +490,8 @@
             html += casiGanadores.map(w => `<span style="color:#ff9900">😅 ${w.name} (Apostó ${w.cantidad})</span>`).join('<br>');
         }
         list.innerHTML = html;
+        document.getElementById('btn-seed').style.display = 'block';
+        document.getElementById('btn-seed').disabled = false;
     }
 
     function cerrarBanner() { document.getElementById('winner-banner').style.display = 'none'; }
