@@ -126,13 +126,11 @@
     const SB_URL = 'https://mzlamrxvtvxbuamyfplz.supabase.co';
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16bGFtcnh2dHZ4YnVhbXlmcGx6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNTAxNjEsImV4cCI6MjA5MjkyNjE2MX0.fdebTvX68sDHUbIjCFDhfipauXap4qabWko7U8gLyxg';
     
-    // IMPORTANTE: Usamos 'miSupabase' para no entrar en conflicto con la librería
     const miSupabase = supabase.createClient(SB_URL, SB_KEY);
 
     const urlParams = new URLSearchParams(window.location.search);
     const soyHost = urlParams.get('host') === 'true';
 
-    // Iniciar vistas al cargar
     window.addEventListener('DOMContentLoaded', () => {
         if (soyHost) {
             document.getElementById('view-host').classList.remove('hidden');
@@ -141,8 +139,6 @@
             document.getElementById('view-player').classList.remove('hidden');
         }
     });
-
-    // --- LÓGICA DEL JUEGO ---
 
     async function nuevaRonda() {
         const letras = ['A', 'B', 'C'];
@@ -153,41 +149,38 @@
         document.getElementById('dungeon-visual').innerHTML = "";
         document.getElementById('btn-reveal').style.display = 'inline-block';
         
-        // Limpiar base de datos para la nueva ronda
         await miSupabase.from('apuestas').delete().neq('id', 0);
         document.getElementById('list-bets').innerHTML = "";
     }
 
     async function enviarApuesta() {
-        const nombre = document.getElementById('p-name').value;
-        const apuesta = document.getElementById('p-bet').value;
+        const nombreVal = document.getElementById('p-name').value;
+        const apuestaVal = document.getElementById('p-bet').value;
 
-        if(!nombre || !apuesta) return alert("Rellena todos los campos.");
+        if(!nombreVal || !apuestaVal) return alert("Rellena todos los campos.");
 
+        // AQUÍ HEMOS CAMBIADO 'nombre' POR 'name' PARA QUE COINCIDA CON TU SUPABASE
         const { error } = await miSupabase
             .from('apuestas')
-            .insert([{ nombre: nombre, cantidad: parseInt(apuesta) }]);
+            .insert([{ name: nombreVal, cantidad: parseInt(apuestaVal) }]);
 
         if (!error) {
             document.getElementById('msg-ok').innerText = "✅ Apuesta enviada correctamente.";
             document.getElementById('p-bet').value = "";
         } else {
             console.error(error);
-            alert("Error al enviar. Revisa las políticas RLS en Supabase.");
+            alert("Error al enviar. Revisa las políticas RLS.");
         }
     }
 
     function revelar() {
         const seed = document.getElementById('display-seed').innerText;
         let total = 0;
-
-        // Azar Puro: Cada letra es un dado distinto
         seed.split('').forEach(letra => {
-            if(letra === 'A') total += Math.floor(Math.random() * 4) + 1; // Dado 4
-            if(letra === 'B') total += Math.floor(Math.random() * 6) + 1; // Dado 6
-            if(letra === 'C') total += Math.floor(Math.random() * 8) + 1; // Dado 8
+            if(letra === 'A') total += Math.floor(Math.random() * 4) + 1;
+            if(letra === 'B') total += Math.floor(Math.random() * 6) + 1;
+            if(letra === 'C') total += Math.floor(Math.random() * 8) + 1;
         });
-
         animarMazmorra(total);
     }
 
@@ -208,7 +201,8 @@
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'apuestas' }, payload => {
                 const lista = document.getElementById('list-bets');
                 const item = document.createElement('li');
-                item.innerHTML = `<span>👤 ${payload.new.nombre}</span> <span class="bet-val">${payload.new.cantidad} habs</span>`;
+                // AQUÍ TAMBIÉN CAMBIAMOS A 'payload.new.name'
+                item.innerHTML = `<span>👤 ${payload.new.name}</span> <span class="bet-val">${payload.new.cantidad} habs</span>`;
                 lista.appendChild(item);
             })
             .subscribe();
