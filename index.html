@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dungeon Lotto: The Live Show 🎬🏰</title>
+    <title>Dungeon Lotto: Giant Dice Edition 🎲🏰</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
@@ -62,52 +62,51 @@
             display: none; box-shadow: 0 0 20px rgba(0,0,0,0.8); line-height: 1.4;
         }
 
-        /* --- VISUALIZADOR DE DADOS GEOMÉTRICOS --- */
-        #dice-visualizer {
-            display: none; flex-direction: column; align-items: center; justify-content: center;
-            margin-top: 15px; padding: 20px 0; border-top: 1px solid #333;
+        /* =========================================
+           NUEVO: DADO GIGANTE EN EL CENTRO
+           ========================================= */
+        #giant-dice-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 400;
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+            backdrop-filter: blur(5px);
+        }
+
+        #giant-dice-label {
+            font-size: 4rem; color: var(--gold); font-weight: bold; margin-bottom: 30px;
+            text-shadow: 0 0 20px #000; text-align: center;
         }
         
         .rpg-dice {
-            width: 120px; height: 120px; background: var(--gold); color: #000;
+            background: var(--gold); color: #000;
             display: flex; justify-content: center; align-items: center;
-            font-size: 4.5rem; font-weight: bold; text-shadow: 0 0 5px rgba(255,255,255,0.5);
+            font-weight: bold; text-shadow: 0 0 5px rgba(255,255,255,0.5);
             transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+        }
+
+        .rpg-dice.giant {
+            width: 250px; height: 250px; font-size: 10rem;
         }
 
         /* FORMAS DE LOS DADOS (CSS Polygons) */
-        .dice-d4 { 
-            clip-path: polygon(50% 0%, 0% 100%, 100% 100%); 
-            align-items: flex-end; padding-bottom: 15px; /* Ajuste para que el texto baje */
-        }
-        .dice-d6 { 
-            border-radius: 15px; 
-        }
-        .dice-d8 { 
-            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); 
-        }
+        .dice-d4 { clip-path: polygon(50% 0%, 0% 100%, 100% 100%); align-items: flex-end; padding-bottom: 30px; }
+        .dice-d6 { border-radius: 20px; }
+        .dice-d8 { clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); }
 
         /* ESTADOS DEL DADO */
         .dice-rolling { 
-            animation: spinShake 0.1s infinite; filter: blur(1px); 
+            animation: spinShake 0.1s infinite; filter: blur(2px); 
             background: #888; color: #fff;
         }
         .dice-explode { 
             background: #e74c3c !important; color: #fff !important; 
-            transform: scale(1.4); box-shadow: 0 0 40px #e74c3c !important;
+            transform: scale(1.3); box-shadow: 0 0 60px #e74c3c !important;
             animation: pulseExplode 0.5s infinite alternate;
         }
 
-        @keyframes spinShake {
-            0% { transform: rotate(-10deg) scale(1); }
-            50% { transform: rotate(10deg) scale(1.1); }
-            100% { transform: rotate(-10deg) scale(1); }
-        }
-        @keyframes pulseExplode {
-            0% { transform: scale(1.3); text-shadow: 0 0 10px #fff; }
-            100% { transform: scale(1.5); text-shadow: 0 0 30px #fff; }
-        }
+        @keyframes spinShake { 0% { transform: rotate(-10deg) scale(1); } 50% { transform: rotate(10deg) scale(1.1); } 100% { transform: rotate(-10deg) scale(1); } }
+        @keyframes pulseExplode { 0% { transform: scale(1.2); text-shadow: 0 0 20px #fff; } 100% { transform: scale(1.4); text-shadow: 0 0 50px #fff; } }
 
         .controls { padding: 15px; background: #1a1a1a; display: flex; justify-content: center; gap: 20px; border-top: 1px solid var(--gold); z-index: 10; }
         
@@ -177,15 +176,14 @@
     <div id="view-host">
         <div id="dungeon-canvas"></div>
         
+        <div id="giant-dice-overlay">
+            <div id="giant-dice-label">TIRANDO...</div>
+            <div id="giant-dice" class="rpg-dice giant">?</div>
+        </div>
+        
         <div id="live-log">
-            <h3 style="margin:0 0 10px 0; color:var(--gold); border-bottom:1px solid var(--gold); text-align:center;">📡 CRÓNICA DE FORJA</h3>
-            
-            <div id="dice-visualizer">
-                <div id="active-dice-shape" class="rpg-dice">0</div>
-                <div id="dice-status-text" style="color:var(--gold); margin-top:15px; font-weight:bold;">TIRANDO...</div>
-            </div>
-
-            <div id="log-content" style="margin-top:15px; text-align:center; color:#aaa;">Esperando a los dioses...</div>
+            <h3 style="margin:0 0 10px 0; color:var(--gold); border-bottom:1px solid var(--gold); text-align:center;">📡 CRÓNICA</h3>
+            <div id="log-content" style="margin-top:10px; color:#aaa;">Esperando a los dioses...</div>
         </div>
         
         <div id="winner-banner">
@@ -258,7 +256,6 @@
         document.getElementById('room-counter').innerText = "SALAS: 0";
         document.getElementById('winner-banner').style.display = 'none';
         document.getElementById('live-log').style.display = 'none';
-        document.getElementById('dice-visualizer').style.display = 'none';
         document.getElementById('seed-bono').innerText = "";
         document.getElementById('bet-timer').innerText = "";
         
@@ -347,7 +344,7 @@
     }
 
     // ==========================================
-    // EL NÚCLEO CON DADOS VISUALES 3D (CSS)
+    // EL NÚCLEO CON EL DADO GIGANTE
     // ==========================================
     async function forjarMazmorraEnVivo() {
         clearInterval(timerInterval);
@@ -355,13 +352,13 @@
         document.getElementById('btn-reveal').style.display = 'none';
         
         let logUI = document.getElementById('live-log');
-        let diceBox = document.getElementById('dice-visualizer');
-        let diceShape = document.getElementById('active-dice-shape');
-        let diceStatus = document.getElementById('dice-status-text');
         let logContent = document.getElementById('log-content');
         
+        let giantOverlay = document.getElementById('giant-dice-overlay');
+        let giantDice = document.getElementById('giant-dice');
+        let giantLabel = document.getElementById('giant-dice-label');
+        
         logUI.style.display = 'block';
-        diceBox.style.display = 'flex';
         logContent.innerHTML = "";
         
         let seed = window.currentSeed;
@@ -389,13 +386,13 @@
             slots.forEach(s => s.classList.remove('active-roll'));
             slots[i].classList.add('active-roll');
 
-            // Configurar la forma del dado según la letra
-            diceShape.className = `rpg-dice ${claseDado}`;
-            diceShape.innerText = "?";
-            diceStatus.innerText = `PREPARANDO D${caras}...`;
-            diceStatus.style.color = "#aaa";
+            // --- ABRIR PANTALLA GIGANTE ---
+            giantOverlay.style.display = 'flex';
+            giantDice.className = `rpg-dice giant ${claseDado}`;
+            giantLabel.innerText = `SLOT ${i+1} [D${caras}]`;
+            giantLabel.style.color = "var(--gold)";
 
-            lineasLog.push(`Slot ${i+1} [${letra} - D${caras}]:`);
+            lineasLog.push(`Slot ${i+1} [${letra}]:`);
             logContent.innerHTML = lineasLog.join('<br>');
             
             await sleep(1000); 
@@ -405,30 +402,27 @@
             let tirada;
             
             do {
-                // ANIMACIÓN DE GIRO DE DADO
-                diceShape.classList.add('dice-rolling');
-                diceStatus.innerText = "¡TIRANDO!";
-                diceStatus.style.color = "var(--gold)";
+                // ANIMACIÓN DE GIRO GIGANTE
+                giantDice.classList.add('dice-rolling');
                 
                 let rollAnim = setInterval(() => {
-                    diceShape.innerText = Math.floor(Math.random() * caras) + 1;
-                }, 50);
+                    giantDice.innerText = Math.floor(Math.random() * caras) + 1;
+                }, 40);
 
-                await sleep(1200); // Tiempo que está el dado girando visualmente
+                await sleep(1500); 
                 clearInterval(rollAnim);
-                diceShape.classList.remove('dice-rolling');
+                giantDice.classList.remove('dice-rolling');
 
-                // RESULTADO REAL
                 tirada = Math.floor(Math.random() * caras) + 1;
                 sumaDado += tirada;
-                diceShape.innerText = tirada;
+                giantDice.innerText = tirada;
                 
                 if(tirada === caras) {
-                    // ¡EXPLOSIÓN!
+                    // ¡EXPLOSIÓN GIGANTE!
                     tiradas.push(`<span style="color:#e74c3c; font-weight:bold">${tirada}💥</span>`);
-                    diceShape.classList.add('dice-explode');
-                    diceStatus.innerText = "¡EXPLOSIÓN! TIRA OTRA VEZ";
-                    diceStatus.style.color = "#e74c3c";
+                    giantDice.classList.add('dice-explode');
+                    giantLabel.innerText = "¡EXPLOSIÓN!";
+                    giantLabel.style.color = "#e74c3c";
                     
                     document.getElementById('game-container').classList.add('shake-heavy');
                     setTimeout(()=> document.getElementById('game-container').classList.remove('shake-heavy'), 200);
@@ -436,21 +430,27 @@
                     lineasLog[lineasLog.length - 1] = `Slot ${i+1} [${letra}]: { ${tiradas.join(' + ')}... }`;
                     logContent.innerHTML = lineasLog.join('<br>');
                     
-                    await sleep(2500); // 2.5s con el dado en rojo gigante para que griten
-                    diceShape.classList.remove('dice-explode');
+                    await sleep(2500); // 2.5s con el dado en rojo para que se vuelva loca la clase
+                    giantDice.classList.remove('dice-explode');
+                    giantLabel.innerText = "OTRA VEZ...";
+                    giantLabel.style.color = "var(--gold)";
+                    await sleep(500);
                 } else {
                     // TIRADA NORMAL
                     tiradas.push(tirada);
-                    diceStatus.innerText = "FIJADO";
-                    diceStatus.style.color = "#2ecc71";
+                    giantLabel.innerText = `+${tirada}`;
+                    giantLabel.style.color = "#2ecc71";
                     
                     lineasLog[lineasLog.length - 1] = `Slot ${i+1} [${letra}]: { ${tiradas.join(' + ')} }`;
                     logContent.innerHTML = lineasLog.join('<br>');
                     
-                    await sleep(1500); // 1.5s viendo el número antes de forjar
+                    await sleep(1500); 
                 }
 
             } while(tirada === caras);
+
+            // --- CERRAR PANTALLA GIGANTE ---
+            giantOverlay.style.display = 'none';
 
             basePorLetra[letra] += sumaDado;
             totalSalasFinales += sumaDado;
@@ -458,8 +458,6 @@
             lineasLog[lineasLog.length - 1] = `<span style="color:var(--gold)">Slot ${i+1} [${letra}]:</span> { ${tiradas.join(' + ')} } = <strong>${sumaDado}</strong>`;
             logContent.innerHTML = lineasLog.join('<br>');
 
-            diceStatus.innerText = `FORJANDO ${sumaDado} SALAS...`;
-            diceStatus.style.color = "#fff";
             await spawnSalasVisually(sumaDado, false);
             
             slots[i].classList.remove('active-roll');
@@ -467,8 +465,6 @@
         }
 
         // FASE 2: Multiplicadores
-        diceBox.style.display = 'none'; // Ocultamos el dado, ya no hace falta
-        
         let esJackpot = (counts['A']===3 || counts['B']===3 || counts['C']===3);
         let letraDoble = Object.keys(counts).find(k => counts[k] === 2);
 
