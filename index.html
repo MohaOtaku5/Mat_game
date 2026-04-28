@@ -51,17 +51,15 @@
 
         #dungeon-canvas { flex-grow: 1; position: relative; }
         
-        /* PANELES LATERALES */
         #side-panel {
             position: absolute; right: 20px; top: 20px; width: 220px; background: rgba(0,0,0,0.85);
             border: 1px solid var(--gold); padding: 15px; max-height: 60%; overflow-y: auto; z-index: 100;
         }
         
-        /* NUEVO HUD DE LOG EN DIRECTO */
         #live-log {
-            position: absolute; left: 20px; top: 20px; width: 320px; background: rgba(0,0,0,0.9);
+            position: absolute; left: 20px; top: 20px; width: 340px; background: rgba(0,0,0,0.9);
             border: 2px dashed var(--gold); padding: 15px; font-size: 1.4rem; z-index: 100;
-            display: none; box-shadow: 0 0 20px rgba(0,0,0,0.8);
+            display: none; box-shadow: 0 0 20px rgba(0,0,0,0.8); line-height: 1.4;
         }
 
         .controls { padding: 15px; background: #1a1a1a; display: flex; justify-content: center; gap: 20px; border-top: 1px solid var(--gold); z-index: 10; }
@@ -91,7 +89,7 @@
 
         .room { position: absolute; width: 45px; height: 45px; background: #2a2a2a; border: 2px solid var(--wall); display: flex; align-items: center; justify-content: center; font-size: 20px; z-index: 10; animation: appear 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         .corridor { position: absolute; background: var(--corridor); z-index: 5; }
-        #winner-banner { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.95); border: 4px double var(--gold); padding: 30px; text-align: center; z-index: 1000; display: none; min-width: 450px; box-shadow: 0 0 50px rgba(0,0,0,1); }
+        #winner-banner { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.95); border: 4px double var(--gold); padding: 40px; text-align: center; z-index: 1000; display: none; min-width: 450px; box-shadow: 0 0 50px rgba(0,0,0,1); }
         #bet-timer { color: #e74c3c; font-size: 1.4rem; font-weight: bold; margin-top: 5px; height: 25px;}
 
         button { background: #222; color: var(--gold); border: 2px solid var(--gold); padding: 10px 25px; font-family: 'VT323'; font-size: 1.5rem; cursor: pointer; transition: 0.2s;}
@@ -139,7 +137,7 @@
         
         <div id="winner-banner">
             <h2 id="win-title" style="color: var(--gold); margin-top: 0; font-size: 3rem;"></h2>
-            <div id="winner-list" style="font-size: 1.8rem; margin: 20px 0; color: #fff;"></div>
+            <div id="winner-list" style="font-size: 2rem; margin: 20px 0; color: #fff;"></div>
             <button onclick="cerrarBanner()">SIGUIENTE VÍCTIMA</button>
         </div>
 
@@ -168,7 +166,6 @@
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16bGFtcnh2dHZ4YnVhbXlmcGx6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNTAxNjEsImV4cCI6MjA5MjkyNjE2MX0.fdebTvX68sDHUbIjCFDhfipauXap4qabWko7U8gLyxg';
     const miSupabase = supabase.createClient(SB_URL, SB_KEY);
 
-    // Herramienta mágica para pausar la ejecución y dar dramatismo
     const sleep = ms => new Promise(r => setTimeout(r, ms));
 
     let roomsData = [];
@@ -197,7 +194,6 @@
         }
     }
 
-    // --- ANIMACIÓN DE TRAGAPERRAS ---
     async function nuevaRonda() {
         document.getElementById('btn-seed').disabled = true;
         const letras = ['A', 'B', 'C'];
@@ -218,13 +214,14 @@
         await miSupabase.from('apuestas').delete().neq('id', 0);
         document.getElementById('list-bets').innerHTML = "";
 
-        const stopTimes = [1200, 2200, 3500]; 
+        // TRAGAPERRAS LENTA Y TENSIONANTE (Casi 7 segundos en total)
+        const stopTimes = [2000, 4000, 6500]; 
 
         slots.forEach((slot, index) => {
             let spinInterval = setInterval(() => {
                 slot.innerText = letras[Math.floor(Math.random() * 3)];
                 slot.style.transform = `translateY(${Math.random() * 10 - 5}px)`; 
-            }, 40);
+            }, 50);
 
             setTimeout(() => {
                 clearInterval(spinInterval);
@@ -238,7 +235,7 @@
                 } else {
                     document.getElementById('game-container').classList.add('shake-heavy');
                     setTimeout(()=> document.getElementById('game-container').classList.remove('shake-heavy'), 300);
-                    setTimeout(()=> aplicarEstilosBono(seed), 400); 
+                    setTimeout(()=> aplicarEstilosBono(seed), 1000); 
                 }
             }, stopTimes[index]);
         });
@@ -297,7 +294,7 @@
     }
 
     // ==========================================
-    // EL NUEVO NÚCLEO: GENERACIÓN SECUENCIAL
+    // EL NÚCLEO LENTO Y TENSO
     // ==========================================
     async function forjarMazmorraEnVivo() {
         clearInterval(timerInterval);
@@ -312,7 +309,6 @@
         let seed = window.currentSeed;
         let slots = [document.getElementById('slot-1'), document.getElementById('slot-2'), document.getElementById('slot-3')];
         
-        // Colocar el castillo inicial
         roomsData = [];
         globalRoomCount = 0;
         const canvas = document.getElementById('dungeon-canvas');
@@ -325,20 +321,21 @@
         let counts = {A:0, B:0, C:0};
         for(let l of seed) counts[l]++;
 
-        let lineasLog = []; // Guarda el histórico del texto
+        let lineasLog = [];
 
         // FASE 1: Tirar dados uno a uno
         for(let i=0; i<3; i++) {
             let letra = seed[i];
             let caras = (letra==='A') ? 4 : (letra==='B') ? 6 : 8;
             
-            // Iluminar el dado actual
             slots.forEach(s => s.classList.remove('active-roll'));
             slots[i].classList.add('active-roll');
 
-            lineasLog.push(`<span style="color:#888">Tirando Slot ${i+1} [${letra} - D${caras}]...</span>`);
+            lineasLog.push(`<span style="color:#888">Preparando Slot ${i+1} [${letra} - D${caras}]...</span>`);
             logContent.innerHTML = lineasLog.join('<br>');
-            await sleep(600); // Pausa dramática antes de tirar
+            
+            // PAUSA ANTES DE EMPEZAR A TIRAR
+            await sleep(1500); 
 
             let sumaDado = 0;
             let tiradas = [];
@@ -352,16 +349,22 @@
                     tiradas.push(`<span style="color:#e74c3c; font-weight:bold">${tirada}💥</span>`);
                     document.getElementById('game-container').classList.add('shake-heavy');
                     setTimeout(()=> document.getElementById('game-container').classList.remove('shake-heavy'), 200);
+                    
+                    let textoTirada = `Slot ${i+1} [${letra}]: { ${tiradas.join(' + ')}... }`;
+                    lineasLog[lineasLog.length - 1] = textoTirada;
+                    logContent.innerHTML = lineasLog.join('<br>');
+                    
+                    // SUSPENSE BRUTAL TRAS EXPLOSIÓN
+                    await sleep(2200); 
                 } else {
                     tiradas.push(tirada);
+                    let textoTirada = `Slot ${i+1} [${letra}]: { ${tiradas.join(' + ')} }`;
+                    lineasLog[lineasLog.length - 1] = textoTirada;
+                    logContent.innerHTML = lineasLog.join('<br>');
+                    
+                    // PAUSA NORMAL
+                    await sleep(1000); 
                 }
-
-                // Actualizar log en tiempo real
-                let textoTirada = `Slot ${i+1} [${letra}]: { ${tiradas.join(' + ')} }`;
-                lineasLog[lineasLog.length - 1] = textoTirada;
-                logContent.innerHTML = lineasLog.join('<br>');
-                
-                await sleep(500); // Pausa entre explosiones para que duela
 
             } while(tirada === caras);
 
@@ -371,51 +374,63 @@
             lineasLog[lineasLog.length - 1] = `<span style="color:var(--gold)">Slot ${i+1} [${letra}]:</span> { ${tiradas.join(' + ')} } = <strong>${sumaDado}</strong>`;
             logContent.innerHTML = lineasLog.join('<br>');
 
-            // ¡Generar las salas de este dado!
             await spawnSalasVisually(sumaDado, false);
             
             slots[i].classList.remove('active-roll');
-            await sleep(500); // Pausa antes de pasar al siguiente slot
+            
+            // DESCANSO ANTES DEL SIGUIENTE SLOT
+            await sleep(2000); 
         }
 
-        // FASE 2: Multiplicadores (Frenesí)
+        // FASE 2: Multiplicadores (Frenesí y Agonía)
         let esJackpot = (counts['A']===3 || counts['B']===3 || counts['C']===3);
         let letraDoble = Object.keys(counts).find(k => counts[k] === 2);
 
         if(esJackpot) {
-            await sleep(800);
-            let salasExtra = totalSalasFinales * 2; // Sumamos x2 para que total sea x3
+            lineasLog.push(`<hr><span style="color:#e74c3c; font-size:1.6rem; animation: pulse 1s infinite;">🚨 CALCULANDO JACKPOT... 🚨</span>`);
+            logContent.innerHTML = lineasLog.join('<br>');
+            
+            // SUSPENSE ANTES DEL JACKPOT
+            await sleep(3500); 
+            
+            let salasExtra = totalSalasFinales * 2; 
             
             let flash = document.getElementById('flash-overlay');
             flash.classList.add('flash-anim');
             setTimeout(() => flash.classList.remove('flash-anim'), 800);
 
-            lineasLog.push(`<hr><span style="color:#e74c3c; font-size:1.6rem;">🚨 ¡JACKPOT x3 ACTIVADO! 🚨<br>Inyectando ${salasExtra} salas...</span>`);
+            lineasLog[lineasLog.length - 1] = `<hr><span style="color:#e74c3c; font-size:1.6rem;">🚨 ¡JACKPOT x3 ACTIVADO! 🚨<br>Inyectando ${salasExtra} salas extra...</span>`;
             logContent.innerHTML = lineasLog.join('<br>');
 
-            await spawnSalasVisually(salasExtra, true); // True = Va muy rapido
+            await spawnSalasVisually(salasExtra, true); 
             totalSalasFinales *= 3;
             
         } else if (letraDoble) {
-            await sleep(800);
-            let salasExtra = basePorLetra[letraDoble]; // Sumamos la base otra vez
+            lineasLog.push(`<hr><span style="color:var(--gold); font-size:1.4rem;">✨ CALCULANDO BONUS PAREJA... ✨</span>`);
+            logContent.innerHTML = lineasLog.join('<br>');
             
-            lineasLog.push(`<hr><span style="color:var(--gold); font-size:1.4rem;">✨ BONUS PAREJA [${letraDoble}] x2 ✨<br>Añadiendo ${salasExtra} salas...</span>`);
+            // SUSPENSE ANTES DEL BONO
+            await sleep(2500); 
+            
+            let salasExtra = basePorLetra[letraDoble]; 
+            
+            lineasLog[lineasLog.length - 1] = `<hr><span style="color:var(--gold); font-size:1.4rem;">✨ BONUS PAREJA [${letraDoble}] x2 ✨<br>Añadiendo ${salasExtra} salas...</span>`;
             logContent.innerHTML = lineasLog.join('<br>');
 
             await spawnSalasVisually(salasExtra, true);
             totalSalasFinales += salasExtra;
         }
 
-        // FIN DEL JUEGO
-        lineasLog.push(`<br><div style="background:#fff; color:#000; text-align:center; padding:5px; font-weight:bold;">TOTAL FINAL: ${totalSalasFinales}</div>`);
+        // FIN DEL JUEGO CON REDOBLE DE TAMBORES
+        lineasLog.push(`<br><div style="background:#fff; color:#000; text-align:center; padding:5px; font-weight:bold;">COMPROBANDO APUESTAS...</div>`);
         logContent.innerHTML = lineasLog.join('<br>');
+        
+        await sleep(3000); // 3 SEGUNDOS DE TENSIÓN ANTES DE MOSTRAR QUIÉN GANA
 
-        await sleep(1500);
         buscarGanadores(totalSalasFinales);
     }
 
-    // Generador secuencial de salas
+    // Generador con curva de tensión
     async function spawnSalasVisually(cantidad, frenesi) {
         let counterUI = document.getElementById('room-counter');
         let container = document.getElementById('game-container');
@@ -442,8 +457,17 @@
             container.classList.add('shake-small');
             setTimeout(() => container.classList.remove('shake-small'), 50);
 
-            // Si es frenesí (multiplicador) va cagando leches, si no, es tenso
-            let delay = frenesi ? 30 : 150;
+            // CURVA DE TENSIÓN: Las últimas salas de la tirada tardan muchísimo más
+            let delay;
+            if(frenesi) {
+                delay = 40; // El multiplicador va escopeteado
+            } else {
+                let remaining = cantidad - i;
+                if(remaining === 1) delay = 1000; // LA ÚLTIMA SALA TARDA 1 SEGUNDO
+                else if(remaining === 2) delay = 600; // LA PENÚLTIMA TARDA MEDIO SEGUNDO
+                else if(remaining === 3) delay = 350;
+                else delay = 120; // Ritmo normal
+            }
             await sleep(delay);
         }
     }
@@ -474,15 +498,18 @@
         const { data: b } = await miSupabase.from('apuestas').select('*');
         const list = document.getElementById('winner-list');
         document.getElementById('winner-banner').style.display = 'block';
+        
         let ganadores = b.filter(a => parseInt(a.cantidad) === total);
         let casiGanadores = b.filter(a => Math.abs(parseInt(a.cantidad) - total) === 1);
-        let html = "";
+        
+        let html = `<div style="font-size: 2.5rem; margin-bottom: 20px;">TOTAL EXACTO: <span style="color:#fff">${total}</span></div>`;
+        
         if(ganadores.length > 0) {
             document.getElementById('win-title').innerText = "¡VICTORIA!";
             document.getElementById('win-title').style.color = "#2ecc71";
             html += ganadores.map(w => `🏆 ${w.name}`).join('<br>');
         } else {
-            document.getElementById('win-title').innerText = "TODOS MUERTOS";
+            document.getElementById('win-title').innerText = "DERROTA COLECTIVA";
             document.getElementById('win-title').style.color = "#e74c3c";
         }
         if(casiGanadores.length > 0) {
