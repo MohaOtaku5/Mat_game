@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dungeon Seed Lotto 🏰</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --gold: #ffd700;
+            --dark-red: #8b0000;
+            --bg: #121212;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: #e0e0e0;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #game-container {
+            width: 90%;
+            max-width: 600px;
+            border: 4px double #555;
+            padding: 20px;
+            background: #1a1a1a;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        h1 { color: var(--gold); text-shadow: 2px 2px #000; }
+
+        .hidden { display: none; }
+
+        /* Estilo Botones */
+        button {
+            background: #444;
+            color: white;
+            border: 2px solid var(--gold);
+            padding: 10px 20px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+            margin: 10px;
+        }
+
+        button:hover { background: var(--gold); color: black; }
+
+        /* Vistas */
+        input {
+            padding: 10px;
+            background: #222;
+            border: 1px solid #555;
+            color: white;
+            margin: 5px;
+            width: 80%;
+        }
+
+        /* Visualización de la Mazmorra */
+        #seed-box { font-size: 2.5rem; color: var(--gold); margin: 20px 0; letter-spacing: 5px; }
+        
+        #dungeon-visual {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            min-height: 50px;
+        }
+
+        .room {
+            width: 40px;
+            height: 40px;
+            background: var(--dark-red);
+            border: 2px solid white;
+            animation: spawn 0.4s ease forwards;
+        }
+
+        @keyframes spawn {
+            from { transform: scale(0) rotate(90deg); opacity: 0; }
+            to { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        /* Lista de Jugadores */
+        #leaderboard {
+            margin-top: 30px;
+            border-top: 1px solid #444;
+            text-align: left;
+        }
+
+        ul { list-style: none; padding: 0; }
+        li { padding: 5px; border-bottom: 1px id #333; display: flex; justify-content: space-between; }
+        .bet-val { color: var(--gold); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <h1>🏰 SEED-LOTTO 🏰</h1>
+
+    <div id="view-player" class="hidden">
+        <p>Introduce tu nombre y tu apuesta:</p>
+        <input type="text" id="p-name" placeholder="Tu nombre o Nick">
+        <input type="number" id="p-bet" placeholder="¿Cuántas habitaciones?">
+        <button onclick="enviarApuesta()">ENVIAR APUESTA</button>
+        <p id="msg-ok" style="color: var(--gold);"></p>
+    </div>
+
+    <div id="view-host" class="hidden">
+        <div id="seed-box">SEED: <span id="display-seed">???</span></div>
+        
+        <button onclick="nuevaRonda()">GENERAR SEED</button>
+        <button id="btn-reveal" onclick="revelar()" style="display:none">REVELAR RESULTADO</button>
+        
+        <div id="dungeon-visual"></div>
+
+        <div id="leaderboard">
+            <h3>APUESTAS EN TIEMPO REAL:</h3>
+            <ul id="list-bets"></ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- CONFIGURACIÓN SUPABASE ---
+    // SUSTITUYE ESTO CON TUS DATOS DE SUPABASE
+    const SB_URL = 'https://TU_URL_AQUÍ.supabase.co';
+    const SB_KEY = 'TU_KEY_ANON_AQUÍ';
+    const supabase = supabase.createClient(SB_URL, SB_KEY);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const soyHost = urlParams.get('host') === 'true';
+
+    // Iniciar Vistas
+    if (soyHost) {
+        document.getElementById('view-host').classList.remove('hidden');
+        escucharApuestas();
+    } else {
+        document.getElementById('view-player').classList.remove('hidden');
+    }
+
+    // --- LÓGICA DEL JUEGO ---
+
+    async function nuevaRonda() {
+        const letras = ['A', 'B', 'C'];
+        let nuevaSeed = "";
+        for(let i=0; i<3; i++) nuevaSeed += letras[Math.floor(Math.random() * 3)];
+        
+        document.getElementById('display-seed').innerText = nuevaSeed;
+        document.getElementById('dungeon-visual').innerHTML = "";
+        document.getElementById('btn-reveal').style.display = 'inline-block';
+        
+        // Borrar apuestas anteriores en la DB
+        await supabase.from('apuestas').delete().neq('id', 0);
+        document.getElementById('list-bets').innerHTML = "";
+    }
+
+    async function enviarApuesta() {
+        const nombre = document.getElementById('p-name').value;
+        const apuesta = document.getElementById('p-bet').value;
+
+        if(!nombre || !apuesta) return alert("Rellena todo, fiera.");
+
+        const { error } = await supabase
+            .from('apuestas')
+            .insert([{ nombre: nombre, cantidad: parseInt(apuesta) }]);
+
+        if (!error) {
+            document.getElementById('msg-ok').innerText = "✅ Apuesta registrada.";
+            document.getElementById('p-bet').value = "";
+        }
+    }
+
+    function revelar() {
+        const seed = document.getElementById('display-seed').innerText;
+        let total = 0;
+
+        // AZAR PURO: Los dados de la Seed
+        seed.split('').forEach(letra => {
+            if(letra === 'A') total += Math.floor(Math.random() * 4) + 1; // D4
+            if(letra === 'B') total += Math.floor(Math.random() * 6) + 1; // D6
+            if(letra === 'C') total += Math.floor(Math.random() * 8) + 1; // D8
+        });
+
+        animarMazmorra(total);
+    }
+
+    function animarMazmorra(num) {
+        const contenedor = document.getElementById('dungeon-visual');
+        contenedor.innerHTML = "";
+        for(let i=0; i<num; i++) {
+            setTimeout(() => {
+                const sala = document.createElement('div');
+                sala.className = 'room';
+                contenedor.appendChild(sala);
+            }, i * 200);
+        }
+    }
+
+    // Escuchar cambios en la base de datos (Realtime)
+    function escucharApuestas() {
+        supabase.channel('cambios-apuestas')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'apuestas' }, payload => {
+                const lista = document.getElementById('list-bets');
+                const item = document.createElement('li');
+                item.innerHTML = `<span>👤 ${payload.new.nombre}</span> <span class="bet-val">${payload.new.cantidad} habs</span>`;
+                lista.appendChild(item);
+            })
+            .subscribe();
+    }
+</script>
+</body>
+</html>
