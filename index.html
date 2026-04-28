@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dungeon Lotto: Procedural Master 🏰</title>
+    <title>Dungeon Lotto: Host Edition 🏰</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
@@ -28,141 +28,81 @@
             overflow: hidden;
         }
 
-        /* Contenedor Principal */
+        /* EFECTO SCANLINE */
+        body::before {
+            content: " "; display: block; position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            z-index: 500; background-size: 100% 3px, 3px 100%; pointer-events: none;
+        }
+
         #game-container {
-            width: 95vw;
-            height: 90vh;
+            width: 95vw; height: 90vh;
             background: #111;
             border: 4px solid var(--wall);
-            display: flex;
-            flex-direction: column;
+            display: flex; flex-direction: column;
             position: relative;
-            box-shadow: 0 0 50px rgba(0,0,0,1);
         }
 
         header {
-            padding: 10px;
-            text-align: center;
+            padding: 15px; border-bottom: 2px solid var(--gold);
+            display: flex; justify-content: space-between; align-items: center;
             background: #1a1a1a;
-            border-bottom: 2px solid var(--gold);
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
         }
 
-        h1 { margin: 0; color: var(--gold); font-size: 2.5rem; text-shadow: 0 0 10px var(--gold); }
+        h1 { margin: 0; color: var(--gold); font-size: 2rem; text-shadow: 0 0 10px var(--gold); }
 
-        #room-counter {
-            font-size: 1.8rem;
-            color: var(--gold);
-            background: #000;
-            padding: 2px 15px;
-            border: 1px solid var(--gold);
+        #room-counter { font-size: 1.8rem; color: var(--gold); border: 1px solid var(--gold); padding: 5px 15px; }
+
+        /* VISTA HOST */
+        #view-host { flex-grow: 1; display: none; position: relative; overflow: hidden; flex-direction: column; }
+
+        #dungeon-canvas { flex-grow: 1; position: relative; }
+
+        #side-panel {
+            position: absolute; right: 20px; top: 20px;
+            width: 220px; background: rgba(0,0,0,0.8);
+            border: 1px solid var(--gold); padding: 15px;
+            max-height: 60%; overflow-y: auto; z-index: 100;
         }
 
-        /* Área del Mapa */
-        #dungeon-canvas {
-            flex-grow: 1;
-            position: relative;
-            overflow: hidden;
-            background-image: radial-gradient(circle, #1a1a1a 1px, transparent 1px);
-            background-size: 40px 40px;
-        }
+        .controls { padding: 15px; background: #1a1a1a; display: flex; justify-content: center; gap: 20px; border-top: 1px solid var(--gold); }
 
-        /* Estilo de las Habitaciones */
+        /* VISTA JUGADOR */
+        #view-player { display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; gap: 20px; }
+
+        /* ELEMENTOS DE JUEGO */
         .room {
-            position: absolute;
-            width: 45px;
-            height: 45px;
-            background: #2a2a2a;
-            border: 2px solid var(--wall);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            z-index: 10;
-            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            position: absolute; width: 45px; height: 45px;
+            background: #2a2a2a; border: 2px solid var(--wall);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; z-index: 10;
             animation: appear 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
 
-        .corridor {
-            position: absolute;
-            background: var(--corridor);
-            z-index: 5;
-        }
+        .corridor { position: absolute; background: var(--corridor); z-index: 5; }
 
-        /* BANNER DE GANADORES (Nuevo con tu UI) */
         #winner-banner {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.95);
-            border: 4px double var(--gold);
-            padding: 30px;
-            text-align: center;
-            z-index: 200;
-            display: none;
-            min-width: 300px;
-            box-shadow: 0 0 100px rgba(0,0,0,1);
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #000; border: 4px double var(--gold); padding: 40px;
+            text-align: center; z-index: 1000; display: none;
         }
 
-        #winner-list { font-size: 1.8rem; margin: 20px 0; color: #fff; }
-
-        /* Panel Lateral */
-        #side-panel {
-            position: absolute;
-            right: 20px;
-            top: 80px;
-            width: 250px;
-            background: rgba(0,0,0,0.8);
-            border: 1px solid var(--gold);
-            padding: 15px;
-            max-height: 70%;
-            overflow-y: auto;
-            z-index: 100;
-        }
-
-        /* UI de Control */
-        .controls { padding: 15px; background: #1a1a1a; display: flex; justify-content: center; gap: 20px; border-top: 1px solid var(--gold); }
-        
         button {
-            background: #222;
-            color: var(--gold);
-            border: 2px solid var(--gold);
-            padding: 10px 25px;
-            font-family: 'VT323';
-            font-size: 1.5rem;
-            cursor: pointer;
-            transition: 0.2s;
+            background: #222; color: var(--gold); border: 2px solid var(--gold);
+            padding: 10px 25px; font-family: 'VT323'; font-size: 1.5rem; cursor: pointer;
         }
 
-        button:hover { background: var(--gold); color: #000; box-shadow: 0 0 15px var(--gold); }
-
-        .hidden { display: none; }
-
-        @keyframes appear {
-            0% { transform: scale(0) rotate(-20deg); opacity: 0; }
-            100% { transform: scale(1) rotate(0deg); opacity: 1; }
-        }
-
-        /* VIBRACIÓN AL APARECER SALA */
-        .shake { animation: shake 0.2s; }
-        @keyframes shake {
-            0% { transform: translate(1px, 1px); }
-            50% { transform: translate(-1px, -1px); }
-            100% { transform: translate(0, 0); }
-        }
+        button:hover { background: var(--gold); color: #000; }
 
         input {
-            background: #000;
-            border: 1px solid var(--gold);
-            color: var(--gold);
-            padding: 15px;
-            font-family: 'VT323';
-            font-size: 1.5rem;
-            text-align: center;
+            background: #000; border: 1px solid var(--gold); color: var(--gold);
+            padding: 15px; font-family: 'VT323'; font-size: 1.5rem; text-align: center;
         }
+
+        @keyframes appear { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+        .shake { animation: shake 0.2s; }
+        @keyframes shake { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(2px, 2px); } }
     </style>
 </head>
 <body>
@@ -171,29 +111,30 @@
     <header>
         <h1>DUNGEON MASTER LOTTO</h1>
         <div id="room-counter">SALAS: 0</div>
-        <div id="seed-display" style="color: #888;">ESPERANDO...</div>
+        <div id="seed-tag" style="color: #888;">ESPERANDO...</div>
     </header>
 
-    <div id="view-host" class="hidden">
+    <div id="view-host">
         <div id="dungeon-canvas"></div>
         
         <div id="winner-banner">
-            <h2 id="win-title" style="color: var(--gold); margin: 0;">RONDA FINALIZADA</h2>
-            <div id="winner-list"></div>
+            <h2 id="win-title" style="color: var(--gold);">RONDA FINALIZADA</h2>
+            <div id="winner-list" style="font-size: 2rem; margin: 20px 0;"></div>
             <button onclick="cerrarBanner()">CONTINUAR</button>
         </div>
 
         <div id="side-panel">
-            <h3 style="color: var(--gold); margin-top: 0;">📜 APUESTAS</h3>
-            <ul id="list-bets" style="list-style: none; padding: 0;"></ul>
+            <h3 style="color: var(--gold); margin: 0 0 10px 0; border-bottom: 1px solid var(--gold);">📜 APUESTAS</h3>
+            <ul id="list-bets" style="list-style: none; padding: 0; margin: 0;"></ul>
         </div>
+
         <div class="controls">
             <button onclick="nuevaRonda()">NUEVA SEED</button>
             <button id="btn-reveal" style="display:none" onclick="revelar()">FORJAR MAZMORRA</button>
         </div>
     </div>
 
-    <div id="view-player" class="hidden" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 20px;">
+    <div id="view-player">
         <input type="text" id="p-name" placeholder="NOMBRE DEL HÉROE">
         <input type="number" id="p-bet" placeholder="¿CUÁNTAS SALAS?">
         <button onclick="enviarApuesta()">SELLAR APUESTA</button>
@@ -206,31 +147,33 @@
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16bGFtcnh2dHZ4YnVhbXlmcGx6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNTAxNjEsImV4cCI6MjA5MjkyNjE2MX0.fdebTvX68sDHUbIjCFDhfipauXap4qabWko7U8gLyxg';
     const miSupabase = supabase.createClient(SB_URL, SB_KEY);
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const soyHost = urlParams.get('host') === 'true';
+    const soyHost = new URLSearchParams(window.location.search).get('host') === 'true';
 
-    if (soyHost) {
-        document.getElementById('view-host').classList.remove('hidden');
-        escucharApuestas();
-    } else {
-        document.getElementById('view-player').classList.remove('hidden');
-    }
+    // SWITCH DE VISTAS (Aquí estaba el fallo, ahora es estricto)
+    window.onload = () => {
+        if (soyHost) {
+            document.getElementById('view-host').style.display = 'flex';
+            document.getElementById('view-player').remove(); // Borramos el formulario si es host
+            escucharApuestas();
+        } else {
+            document.getElementById('view-player').style.display = 'flex';
+            document.getElementById('view-host').remove(); // Borramos la parte de juego si es jugador
+        }
+    };
 
-    const tileSize = 50;
     let roomsData = [];
+    const tileSize = 50;
 
     async function nuevaRonda() {
         const letras = ['A', 'B', 'C'];
         let seed = "";
         for(let i=0; i<3; i++) seed += letras[Math.floor(Math.random() * 3)];
-        
         window.currentSeed = seed;
-        document.getElementById('seed-display').innerText = "SEED: " + seed;
+        document.getElementById('seed-tag').innerText = "SEED: " + seed;
         document.getElementById('dungeon-canvas').innerHTML = "";
         document.getElementById('room-counter').innerText = "SALAS: 0";
         document.getElementById('winner-banner').style.display = 'none';
         document.getElementById('btn-reveal').style.display = 'block';
-        
         await miSupabase.from('apuestas').delete().neq('id', 0);
         document.getElementById('list-bets').innerHTML = "";
     }
@@ -238,71 +181,60 @@
     async function enviarApuesta() {
         const n = document.getElementById('p-name').value;
         const b = document.getElementById('p-bet').value;
-        if(!n || !b) return alert("Rellena los datos.");
+        if(!n || !b) return alert("Faltan datos.");
         const { error } = await miSupabase.from('apuestas').insert([{ name: n, cantidad: parseInt(b) }]);
         if(!error) {
-            document.getElementById('msg-ok').innerText = "✅ REGISTRADO";
+            document.getElementById('msg-ok').innerText = "✅ APUESTA REGISTRADA";
             document.getElementById('p-bet').value = "";
         }
     }
 
     function revelar() {
         const seed = window.currentSeed;
-        let totalRooms = 0;
+        let total = 0;
         seed.split('').forEach(l => {
-            if(l === 'A') totalRooms += Math.floor(Math.random() * 4) + 1;
-            if(l === 'B') totalRooms += Math.floor(Math.random() * 6) + 1;
-            if(l === 'C') totalRooms += Math.floor(Math.random() * 8) + 1;
+            if(l === 'A') total += Math.floor(Math.random() * 4) + 1;
+            if(l === 'B') total += Math.floor(Math.random() * 6) + 1;
+            if(l === 'C') total += Math.floor(Math.random() * 8) + 1;
         });
-
         document.getElementById('btn-reveal').style.display = 'none';
-        generarMapaProcedural(totalRooms);
+        generarMapa(total);
     }
 
-    function generarMapaProcedural(num) {
+    function generarMapa(num) {
         const canvas = document.getElementById('dungeon-canvas');
         roomsData = [];
         const startX = Math.floor(canvas.offsetWidth / 2 / tileSize) * tileSize;
         const startY = Math.floor(canvas.offsetHeight / 2 / tileSize) * tileSize;
-
-        colocarHabitacion(startX, startY, "🏰", 0);
-        document.getElementById('room-counter').innerText = "SALAS: 1";
+        colocarRoom(startX, startY, "🏰", 0);
 
         for(let i = 1; i < num; i++) {
             setTimeout(() => {
-                let success = false;
-                let intentos = 0;
-                while(!success && intentos < 50) {
+                let ok = false; let tries = 0;
+                while(!ok && tries < 50) {
                     const parent = roomsData[Math.floor(Math.random() * roomsData.length)];
                     const dir = [[0,1], [0,-1], [1,0], [-1,0]][Math.floor(Math.random()*4)];
-                    const newX = parent.x + (dir[0] * tileSize);
-                    const newY = parent.y + (dir[1] * tileSize);
-
-                    if(!roomsData.some(r => r.x === newX && r.y === newY)) {
-                        colocarPasillo(parent.x, parent.y, newX, newY);
-                        colocarHabitacion(newX, newY, "🪨", i);
-                        success = true;
+                    const nX = parent.x + (dir[0] * tileSize);
+                    const nY = parent.y + (dir[1] * tileSize);
+                    if(!roomsData.some(r => r.x === nX && r.y === nY)) {
+                        colocarPasillo(parent.x, parent.y, nX, nY);
+                        colocarRoom(nX, nY, "🪨", i);
+                        ok = true;
                     }
-                    intentos++;
+                    tries++;
                 }
                 document.getElementById('room-counter').innerText = "SALAS: " + (i + 1);
-                
-                // Vibración
                 document.getElementById('game-container').classList.add('shake');
                 setTimeout(() => document.getElementById('game-container').classList.remove('shake'), 150);
-
-                // Si es la última, buscar ganadores
-                if(i === num - 1) setTimeout(() => verificarGanadores(num), 1200);
+                if(i === num - 1) setTimeout(() => buscarGanadores(num), 1200);
             }, i * 400);
         }
     }
 
-    function colocarHabitacion(x, y, icon, index) {
+    function colocarRoom(x, y, icon, idx) {
         const room = document.createElement('div');
-        room.className = 'room';
-        room.style.left = x + 'px';
-        room.style.top = y + 'px';
-        if(index > 0 && Math.random() > 0.8) icon = "💰";
+        room.className = 'room'; room.style.left = x + 'px'; room.style.top = y + 'px';
+        if(idx > 0 && Math.random() > 0.8) icon = "💰";
         room.innerHTML = icon;
         document.getElementById('dungeon-canvas').appendChild(room);
         roomsData.push({x, y});
@@ -310,8 +242,7 @@
 
     function colocarPasillo(x1, y1, x2, y2) {
         const corr = document.createElement('div');
-        corr.className = 'corridor';
-        const p = 22;
+        corr.className = 'corridor'; const p = 22;
         if(x1 === x2) { 
             corr.style.width = '6px'; corr.style.height = tileSize + 'px';
             corr.style.left = (x1 + p) + 'px'; corr.style.top = Math.min(y1, y2) + p + 'px';
@@ -322,32 +253,28 @@
         document.getElementById('dungeon-canvas').appendChild(corr);
     }
 
-    async function verificarGanadores(objetivo) {
-        const { data: apuestas } = await miSupabase.from('apuestas').select('*');
+    async function buscarGanadores(total) {
+        const { data: b } = await miSupabase.from('apuestas').select('*');
         const list = document.getElementById('winner-list');
         document.getElementById('winner-banner').style.display = 'block';
-
-        const ganadores = apuestas.filter(a => a.cantidad === objetivo);
-
-        if(ganadores.length > 0) {
-            document.getElementById('win-title').innerText = "¡GANADORES!";
-            list.innerHTML = ganadores.map(g => `🏆 ${g.name}`).join('<br>');
+        const wins = b.filter(a => a.cantidad === total);
+        if(wins.length > 0) {
+            document.getElementById('win-title').innerText = "¡VICTORIA!";
+            list.innerHTML = wins.map(w => `🏆 ${w.name}`).join('<br>');
         } else {
-            document.getElementById('win-title').innerText = "SIN GANADORES";
-            list.innerHTML = "Nadie acertó las " + objetivo + " salas.";
+            document.getElementById('win-title').innerText = "DERROTA GENERAL";
+            list.innerHTML = "Nadie acertó las " + total + " salas.";
         }
     }
 
     function cerrarBanner() { document.getElementById('winner-banner').style.display = 'none'; }
 
     function escucharApuestas() {
-        miSupabase.channel('live').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'apuestas' }, payload => {
-            const lista = document.getElementById('list-bets');
-            const item = document.createElement('li');
-            item.style.padding = "5px";
-            item.style.borderBottom = "1px solid #333";
-            item.innerHTML = `<span style="color:var(--gold)">${payload.new.name}</span>: ${payload.new.cantidad} salas`;
-            lista.prepend(item);
+        miSupabase.channel('l').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'apuestas' }, p => {
+            const li = document.createElement('li');
+            li.style.padding = "5px"; li.style.borderBottom = "1px solid #333";
+            li.innerHTML = `<span style="color:var(--gold)">${p.new.name}</span>: ${p.new.cantidad}`;
+            document.getElementById('list-bets').prepend(li);
         }).subscribe();
     }
 </script>
