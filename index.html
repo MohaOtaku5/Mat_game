@@ -3,18 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dungeon Seed Lotto 🏰</title>
+    <title>Dungeon Lotto: Procedural Master 🏰</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=VT323&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
         :root {
             --gold: #ffcc00;
-            --gold-glow: rgba(255, 204, 0, 0.4);
-            --stone: #2c2c2c;
-            --wall: #444;
-            --bg: #0a0a0a;
-            --win-color: #2ecc71;
+            --stone: #1a1a1a;
+            --wall: #333;
+            --corridor: #444;
+            --bg: #050505;
         }
 
         body {
@@ -22,139 +21,119 @@
             color: #eee;
             font-family: 'VT323', monospace;
             margin: 0;
-            overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            overflow: hidden;
         }
 
-        /* EFECTO CRT (SCANLINES) DE LA UI ANTERIOR */
-        body::before {
-            content: " ";
-            display: block;
-            position: fixed;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-            z-index: 500;
-            background-size: 100% 3px, 3px 100%;
-            pointer-events: none;
-        }
-
+        /* Contenedor Principal */
         #game-container {
             width: 95vw;
             height: 90vh;
-            background: #151515;
+            background: #111;
             border: 4px solid var(--wall);
-            outline: 2px solid var(--gold);
-            outline-offset: -10px;
             display: flex;
             flex-direction: column;
             position: relative;
-            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            box-shadow: 0 0 50px rgba(0,0,0,1);
         }
 
         header {
-            padding: 20px;
+            padding: 10px;
             text-align: center;
+            background: #1a1a1a;
             border-bottom: 2px solid var(--gold);
-            z-index: 10;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
         }
 
-        h1 {
-            font-family: 'Cinzel', serif;
-            color: var(--gold);
-            font-size: 2.5rem;
-            margin: 0;
-            text-shadow: 0 0 15px var(--gold-glow);
-            letter-spacing: 3px;
-        }
+        h1 { margin: 0; color: var(--gold); font-size: 2.5rem; text-shadow: 0 0 10px var(--gold); }
 
         #room-counter {
-            font-size: 2rem;
+            font-size: 1.8rem;
             color: var(--gold);
-            margin-top: 5px;
+            background: #000;
+            padding: 2px 15px;
+            border: 1px solid var(--gold);
         }
 
-        /* CANVAS DE LA MAZMORRA */
+        /* Área del Mapa */
         #dungeon-canvas {
             flex-grow: 1;
             position: relative;
             overflow: hidden;
-            background: rgba(0,0,0,0.4);
+            background-image: radial-gradient(circle, #1a1a1a 1px, transparent 1px);
+            background-size: 40px 40px;
         }
 
+        /* Estilo de las Habitaciones */
         .room {
             position: absolute;
             width: 45px;
             height: 45px;
-            background: var(--stone);
+            background: #2a2a2a;
             border: 2px solid var(--wall);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 20px;
             z-index: 10;
-            box-shadow: inset 0 0 10px #000;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
             animation: appear 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
 
         .corridor {
             position: absolute;
-            background: var(--wall);
+            background: var(--corridor);
             z-index: 5;
         }
 
-        /* BANNER DE GANADORES PROFESIONAL */
+        /* BANNER DE GANADORES (Nuevo con tu UI) */
         #winner-banner {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: #111;
+            background: rgba(0,0,0,0.95);
             border: 4px double var(--gold);
-            padding: 40px;
+            padding: 30px;
             text-align: center;
-            z-index: 1000;
+            z-index: 200;
             display: none;
+            min-width: 300px;
             box-shadow: 0 0 100px rgba(0,0,0,1);
         }
 
-        #winner-banner h2 { font-family: 'Cinzel', serif; color: var(--gold); font-size: 2.5rem; margin: 0; }
-        #winner-list { font-size: 2rem; color: #fff; margin: 20px 0; }
+        #winner-list { font-size: 1.8rem; margin: 20px 0; color: #fff; }
 
-        /* SIDE PANEL (APUESTAS) */
+        /* Panel Lateral */
         #side-panel {
             position: absolute;
-            right: 25px;
-            top: 100px;
-            width: 220px;
-            background: rgba(0,0,0,0.7);
+            right: 20px;
+            top: 80px;
+            width: 250px;
+            background: rgba(0,0,0,0.8);
             border: 1px solid var(--gold);
             padding: 15px;
-            max-height: 50%;
+            max-height: 70%;
             overflow-y: auto;
             z-index: 100;
         }
 
-        .controls { 
-            padding: 20px; 
-            background: #1a1a1a; 
-            display: flex; 
-            justify-content: center; 
-            gap: 20px; 
-            border-top: 1px solid var(--gold); 
-        }
+        /* UI de Control */
+        .controls { padding: 15px; background: #1a1a1a; display: flex; justify-content: center; gap: 20px; border-top: 1px solid var(--gold); }
         
         button {
-            background: var(--stone);
+            background: #222;
             color: var(--gold);
             border: 2px solid var(--gold);
             padding: 10px 25px;
             font-family: 'VT323';
-            font-size: 1.4rem;
+            font-size: 1.5rem;
             cursor: pointer;
-            text-transform: uppercase;
             transition: 0.2s;
         }
 
@@ -162,8 +141,19 @@
 
         .hidden { display: none; }
 
-        /* VISTA JUGADOR */
-        #view-player { text-align: center; margin-top: 15vh; }
+        @keyframes appear {
+            0% { transform: scale(0) rotate(-20deg); opacity: 0; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        /* VIBRACIÓN AL APARECER SALA */
+        .shake { animation: shake 0.2s; }
+        @keyframes shake {
+            0% { transform: translate(1px, 1px); }
+            50% { transform: translate(-1px, -1px); }
+            100% { transform: translate(0, 0); }
+        }
+
         input {
             background: #000;
             border: 1px solid var(--gold);
@@ -172,21 +162,6 @@
             font-family: 'VT323';
             font-size: 1.5rem;
             text-align: center;
-            margin-bottom: 15px;
-            width: 80%;
-            max-width: 300px;
-        }
-
-        @keyframes appear {
-            0% { transform: scale(0) rotate(-15deg); opacity: 0; }
-            100% { transform: scale(1) rotate(0deg); opacity: 1; }
-        }
-
-        .shake { animation: shake 0.2s; }
-        @keyframes shake {
-            0% { transform: translate(2px, 2px); }
-            50% { transform: translate(-2px, -2px); }
-            100% { transform: translate(0, 0); }
         }
     </style>
 </head>
@@ -194,33 +169,33 @@
 
 <div id="game-container">
     <header>
-        <h1>DUNGEON LOTTO</h1>
-        <div id="room-counter">CRIPTAS EXPLORADAS: 0</div>
+        <h1>DUNGEON MASTER LOTTO</h1>
+        <div id="room-counter">SALAS: 0</div>
+        <div id="seed-display" style="color: #888;">ESPERANDO...</div>
     </header>
 
     <div id="view-host" class="hidden">
         <div id="dungeon-canvas"></div>
         
         <div id="winner-banner">
-            <h2 id="win-title">RONDA FINALIZADA</h2>
-            <div id="winner-list">...</div>
-            <button onclick="cerrarBanner()">SIGUIENTE EXPEDICIÓN</button>
+            <h2 id="win-title" style="color: var(--gold); margin: 0;">RONDA FINALIZADA</h2>
+            <div id="winner-list"></div>
+            <button onclick="cerrarBanner()">CONTINUAR</button>
         </div>
 
         <div id="side-panel">
-            <div style="color: var(--gold); border-bottom: 1px solid var(--gold); margin-bottom: 10px;">EXPEDICIONARIOS</div>
-            <ul id="list-bets" style="list-style: none; padding: 0; font-size: 1.2rem; margin: 0;"></ul>
+            <h3 style="color: var(--gold); margin-top: 0;">📜 APUESTAS</h3>
+            <ul id="list-bets" style="list-style: none; padding: 0;"></ul>
         </div>
-        
         <div class="controls">
-            <button onclick="nuevaRonda()">GENERAR SEED</button>
-            <button id="btn-reveal" style="display:none" onclick="revelar()">REVELAR MAPA</button>
+            <button onclick="nuevaRonda()">NUEVA SEED</button>
+            <button id="btn-reveal" style="display:none" onclick="revelar()">FORJAR MAZMORRA</button>
         </div>
     </div>
 
-    <div id="view-player" class="hidden">
-        <input type="text" id="p-name" placeholder="NOMBRE DEL HÉROE"><br>
-        <input type="number" id="p-bet" placeholder="APUESTA DE SALAS"><br>
+    <div id="view-player" class="hidden" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 20px;">
+        <input type="text" id="p-name" placeholder="NOMBRE DEL HÉROE">
+        <input type="number" id="p-bet" placeholder="¿CUÁNTAS SALAS?">
         <button onclick="enviarApuesta()">SELLAR APUESTA</button>
         <p id="msg-ok" style="color: var(--gold); font-size: 1.5rem;"></p>
     </div>
@@ -241,8 +216,8 @@
         document.getElementById('view-player').classList.remove('hidden');
     }
 
-    let roomsData = [];
     const tileSize = 50;
+    let roomsData = [];
 
     async function nuevaRonda() {
         const letras = ['A', 'B', 'C'];
@@ -250,8 +225,9 @@
         for(let i=0; i<3; i++) seed += letras[Math.floor(Math.random() * 3)];
         
         window.currentSeed = seed;
+        document.getElementById('seed-display').innerText = "SEED: " + seed;
         document.getElementById('dungeon-canvas').innerHTML = "";
-        document.getElementById('room-counter').innerText = "CRIPTAS EXPLORADAS: 0";
+        document.getElementById('room-counter').innerText = "SALAS: 0";
         document.getElementById('winner-banner').style.display = 'none';
         document.getElementById('btn-reveal').style.display = 'block';
         
@@ -262,64 +238,71 @@
     async function enviarApuesta() {
         const n = document.getElementById('p-name').value;
         const b = document.getElementById('p-bet').value;
-        if(!n || !b) return alert("Héroe, faltan datos.");
+        if(!n || !b) return alert("Rellena los datos.");
         const { error } = await miSupabase.from('apuestas').insert([{ name: n, cantidad: parseInt(b) }]);
-        if(!error) document.getElementById('msg-ok').innerText = "✅ APUESTA REGISTRADA";
+        if(!error) {
+            document.getElementById('msg-ok').innerText = "✅ REGISTRADO";
+            document.getElementById('p-bet').value = "";
+        }
     }
 
     function revelar() {
         const seed = window.currentSeed;
-        let total = 0;
+        let totalRooms = 0;
         seed.split('').forEach(l => {
-            if(l === 'A') total += Math.floor(Math.random() * 4) + 1;
-            if(l === 'B') total += Math.floor(Math.random() * 6) + 1;
-            if(l === 'C') total += Math.floor(Math.random() * 8) + 1;
+            if(l === 'A') totalRooms += Math.floor(Math.random() * 4) + 1;
+            if(l === 'B') totalRooms += Math.floor(Math.random() * 6) + 1;
+            if(l === 'C') totalRooms += Math.floor(Math.random() * 8) + 1;
         });
 
         document.getElementById('btn-reveal').style.display = 'none';
-        generarProcedural(total);
+        generarMapaProcedural(totalRooms);
     }
 
-    function generarProcedural(num) {
+    function generarMapaProcedural(num) {
         const canvas = document.getElementById('dungeon-canvas');
         roomsData = [];
         const startX = Math.floor(canvas.offsetWidth / 2 / tileSize) * tileSize;
         const startY = Math.floor(canvas.offsetHeight / 2 / tileSize) * tileSize;
 
-        colocarRoom(startX, startY, "🏰", 0);
-        
+        colocarHabitacion(startX, startY, "🏰", 0);
+        document.getElementById('room-counter').innerText = "SALAS: 1";
+
         for(let i = 1; i < num; i++) {
             setTimeout(() => {
-                let ok = false;
-                let tries = 0;
-                while(!ok && tries < 50) {
+                let success = false;
+                let intentos = 0;
+                while(!success && intentos < 50) {
                     const parent = roomsData[Math.floor(Math.random() * roomsData.length)];
                     const dir = [[0,1], [0,-1], [1,0], [-1,0]][Math.floor(Math.random()*4)];
-                    const nX = parent.x + (dir[0] * tileSize);
-                    const nY = parent.y + (dir[1] * tileSize);
+                    const newX = parent.x + (dir[0] * tileSize);
+                    const newY = parent.y + (dir[1] * tileSize);
 
-                    if(!roomsData.some(r => r.x === nX && r.y === nY)) {
-                        colocarPasillo(parent.x, parent.y, nX, nY);
-                        colocarRoom(nX, nY, "🪨", i);
-                        ok = true;
+                    if(!roomsData.some(r => r.x === newX && r.y === newY)) {
+                        colocarPasillo(parent.x, parent.y, newX, newY);
+                        colocarHabitacion(newX, newY, "🪨", i);
+                        success = true;
                     }
-                    tries++;
+                    intentos++;
                 }
-                document.getElementById('room-counter').innerText = "CRIPTAS EXPLORADAS: " + (i+1);
+                document.getElementById('room-counter').innerText = "SALAS: " + (i + 1);
+                
+                // Vibración
                 document.getElementById('game-container').classList.add('shake');
                 setTimeout(() => document.getElementById('game-container').classList.remove('shake'), 150);
 
-                if(i === num - 1) setTimeout(() => buscarGanadores(num), 1200);
+                // Si es la última, buscar ganadores
+                if(i === num - 1) setTimeout(() => verificarGanadores(num), 1200);
             }, i * 400);
         }
     }
 
-    function colocarRoom(x, y, icon, idx) {
+    function colocarHabitacion(x, y, icon, index) {
         const room = document.createElement('div');
         room.className = 'room';
         room.style.left = x + 'px';
         room.style.top = y + 'px';
-        if(idx > 0 && Math.random() > 0.8) icon = "💰";
+        if(index > 0 && Math.random() > 0.8) icon = "💰";
         room.innerHTML = icon;
         document.getElementById('dungeon-canvas').appendChild(room);
         roomsData.push({x, y});
@@ -339,30 +322,32 @@
         document.getElementById('dungeon-canvas').appendChild(corr);
     }
 
-    async function buscarGanadores(total) {
-        const { data: b } = await miSupabase.from('apuestas').select('*');
+    async function verificarGanadores(objetivo) {
+        const { data: apuestas } = await miSupabase.from('apuestas').select('*');
         const list = document.getElementById('winner-list');
         document.getElementById('winner-banner').style.display = 'block';
 
-        const wins = b.filter(a => a.cantidad === total);
-        if(wins.length > 0) {
-            document.getElementById('win-title').innerText = "¡HÉROES VICTORIOSOS!";
-            document.getElementById('win-title').style.color = "var(--win-color)";
-            list.innerHTML = wins.map(w => `🏆 ${w.name}`).join('<br>');
+        const ganadores = apuestas.filter(a => a.cantidad === objetivo);
+
+        if(ganadores.length > 0) {
+            document.getElementById('win-title').innerText = "¡GANADORES!";
+            list.innerHTML = ganadores.map(g => `🏆 ${g.name}`).join('<br>');
         } else {
-            document.getElementById('win-title').innerText = "SIN SUPERVIVIENTES";
-            document.getElementById('win-title').style.color = "#e74c3c";
-            list.innerHTML = "Nadie predijo las " + total + " criptas.";
+            document.getElementById('win-title').innerText = "SIN GANADORES";
+            list.innerHTML = "Nadie acertó las " + objetivo + " salas.";
         }
     }
 
     function cerrarBanner() { document.getElementById('winner-banner').style.display = 'none'; }
 
     function escucharApuestas() {
-        miSupabase.channel('l').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'apuestas' }, p => {
-            const li = document.createElement('li');
-            li.innerHTML = `👤 ${p.new.name} (${p.new.cantidad})`;
-            document.getElementById('list-bets').prepend(li);
+        miSupabase.channel('live').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'apuestas' }, payload => {
+            const lista = document.getElementById('list-bets');
+            const item = document.createElement('li');
+            item.style.padding = "5px";
+            item.style.borderBottom = "1px solid #333";
+            item.innerHTML = `<span style="color:var(--gold)">${payload.new.name}</span>: ${payload.new.cantidad} salas`;
+            lista.prepend(item);
         }).subscribe();
     }
 </script>
