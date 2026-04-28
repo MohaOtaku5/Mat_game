@@ -3,18 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dungeon Seed Lotto 🏰</title>
+    <title>Dungeon Lotto: Procedural Master 🏰</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=VT323&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
         :root {
             --gold: #ffcc00;
-            --gold-glow: rgba(255, 204, 0, 0.4);
-            --stone: #2c2c2c;
-            --wall: #444;
-            --bg: #0a0a0a;
-            --accent: #e74c3c;
+            --stone: #1a1a1a;
+            --wall: #333;
+            --corridor: #444;
+            --bg: #050505;
         }
 
         body {
@@ -22,183 +21,161 @@
             color: #eee;
             font-family: 'VT323', monospace;
             margin: 0;
-            overflow-x: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            overflow: hidden;
         }
 
-        /* Efecto de Escáner Retro */
-        body::before {
-            content: " ";
-            display: block;
-            position: fixed;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            z-index: 2;
-            background-size: 100% 2px, 3px 100%;
-            pointer-events: none;
-        }
-
+        /* Contenedor Principal */
         #game-container {
-            width: 95%;
-            max-width: 800px;
-            background: #151515;
+            width: 95vw;
+            height: 90vh;
+            background: #111;
             border: 4px solid var(--wall);
-            outline: 2px solid var(--gold);
-            outline-offset: -10px;
-            padding: 40px;
-            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
             position: relative;
-            z-index: 1;
+            box-shadow: 0 0 50px rgba(0,0,0,1);
         }
 
-        h1 {
-            font-family: 'Cinzel', serif;
-            color: var(--gold);
-            font-size: 3rem;
-            margin: 0;
-            text-shadow: 0 0 20px var(--gold-glow);
-            letter-spacing: 5px;
+        header {
+            padding: 10px;
+            text-align: center;
+            background: #1a1a1a;
+            border-bottom: 2px solid var(--gold);
         }
+
+        h1 { margin: 0; color: var(--gold); font-size: 2.5rem; text-shadow: 0 0 10px var(--gold); }
+
+        /* Área del Mapa (Canvas de la Mazmorra) */
+        #dungeon-canvas {
+            flex-grow: 1;
+            position: relative;
+            overflow: hidden;
+            background-image: 
+                radial-gradient(circle, #1a1a1a 1px, transparent 1px);
+            background-size: 40px 40px; /* Tamaño de la rejilla */
+        }
+
+        /* Estilo de las Habitaciones */
+        .room {
+            position: absolute;
+            width: 45px;
+            height: 45px;
+            background: #2a2a2a;
+            border: 2px solid var(--wall);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            z-index: 10;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            animation: appear 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* Estilo de los Pasillos */
+        .corridor {
+            position: absolute;
+            background: var(--corridor);
+            z-index: 5;
+            animation: grow 0.3s ease-out forwards;
+        }
+
+        @keyframes appear {
+            0% { transform: scale(0) rotate(-20deg); opacity: 0; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        @keyframes grow {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Panel Lateral (Apuestas) */
+        #side-panel {
+            position: absolute;
+            right: 20px;
+            top: 80px;
+            width: 250px;
+            background: rgba(0,0,0,0.8);
+            border: 1px solid var(--gold);
+            padding: 15px;
+            max-height: 70%;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        /* UI de Control */
+        .controls { padding: 15px; background: #1a1a1a; display: flex; justify-content: center; gap: 20px; border-top: 1px solid var(--gold); }
+        
+        button {
+            background: #222;
+            color: var(--gold);
+            border: 2px solid var(--gold);
+            padding: 10px 25px;
+            font-family: 'VT323';
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:hover { background: var(--gold); color: #000; box-shadow: 0 0 15px var(--gold); }
 
         .hidden { display: none; }
 
-        /* Botones Juicy */
-        button {
-            background: var(--stone);
-            color: var(--gold);
-            border: 2px solid var(--gold);
-            padding: 12px 24px;
-            font-size: 1.5rem;
-            cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            font-family: 'VT323', monospace;
-            margin: 10px;
-            text-transform: uppercase;
+        /* Estilo para vista móvil (Jugador) */
+        #view-player {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            height: 100%;
         }
-
-        button:hover {
-            transform: scale(1.1);
-            background: var(--gold);
-            color: black;
-            box-shadow: 0 0 15px var(--gold);
-        }
-
-        button:active { transform: scale(0.9); }
 
         input {
             background: #000;
             border: 1px solid var(--gold);
             color: var(--gold);
-            padding: 10px;
-            font-size: 1.2rem;
-            text-align: center;
-            width: 200px;
-            margin-bottom: 10px;
-        }
-
-        /* Mazmorra Visual mejorada */
-        #dungeon-visual {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-            gap: 15px;
-            margin: 30px 0;
-            padding: 20px;
-            background: rgba(0,0,0,0.3);
-            border-radius: 8px;
-            min-height: 100px;
-        }
-
-        .room {
-            width: 60px;
-            height: 60px;
-            background: var(--stone);
-            border: 3px solid #555;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            animation: roomAppear 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-            box-shadow: inset 0 0 10px #000;
-        }
-
-        /* Conectores */
-        .room::after {
-            content: '';
-            position: absolute;
-            background: var(--wall);
-            z-index: -1;
-        }
-
-        .room.connected-r::after { width: 15px; height: 6px; right: -15px; top: 27px; }
-
-        @keyframes roomAppear {
-            0% { transform: scale(0) rotate(-45deg); opacity: 0; }
-            70% { transform: scale(1.2) rotate(10deg); }
-            100% { transform: scale(1) rotate(0deg); opacity: 1; }
-        }
-
-        /* Leaderboard */
-        #leaderboard {
-            margin-top: 40px;
-            background: rgba(255,255,255,0.05);
             padding: 15px;
-            border-left: 4px solid var(--gold);
-        }
-
-        #list-bets li {
-            font-size: 1.4rem;
-            padding: 5px 0;
-            border-bottom: 1px dashed #444;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .bet-val { color: var(--gold); font-weight: bold; }
-
-        /* Efectos Especiales */
-        .shake { animation: shake 0.3s; }
-        @keyframes shake {
-            0% { transform: translate(1px, 1px); }
-            20% { transform: translate(-3px, 0px); }
-            40% { transform: translate(3px, 2px); }
-            100% { transform: translate(0, 0); }
+            font-family: 'VT323';
+            font-size: 1.5rem;
+            text-align: center;
         }
     </style>
 </head>
 <body>
 
 <div id="game-container">
-    <h1>DUNGEON LOTTO</h1>
-    <div style="color: var(--gold); margin-bottom: 20px;">— CRIPTAS DEL AZAR —</div>
-
-    <div id="view-player" class="hidden">
-        <input type="text" id="p-name" placeholder="NOMBRE DEL HÉROE"><br>
-        <input type="number" id="p-bet" placeholder="APUESTA HABITACIONES"><br>
-        <button onclick="enviarApuesta()">ENTRAR EN LA MAZMORRA</button>
-        <p id="msg-ok"></p>
-    </div>
+    <header>
+        <h1>DUNGEON MASTER LOTTO</h1>
+        <div id="seed-display" style="color: #888;">ESPERANDO EXPEDICIÓN...</div>
+    </header>
 
     <div id="view-host" class="hidden">
-        <div id="seed-box" style="font-size: 2rem; border: 1px solid var(--gold); display: inline-block; padding: 10px 30px;">
-            SEED: <span id="display-seed" style="color: var(--gold);">???</span>
+        <div id="dungeon-canvas"></div>
+        <div id="side-panel">
+            <h3 style="color: var(--gold); margin-top: 0;">📜 APUESTAS</h3>
+            <ul id="list-bets" style="list-style: none; padding: 0;"></ul>
         </div>
-        <br>
-        <button onclick="nuevaRonda()">NUEVA EXPEDICIÓN</button>
-        <button id="btn-reveal" onclick="revelar()" style="display:none">REVELAR MAPA</button>
-        
-        <div id="dungeon-visual"></div>
+        <div class="controls">
+            <button onclick="nuevaRonda()">NUEVA SEED</button>
+            <button id="btn-reveal" style="display:none" onclick="revelar()">FORJAR MAZMORRA</button>
+        </div>
+    </div>
 
-        <div id="leaderboard">
-            <div style="color: var(--gold); margin-bottom: 10px;">EXPEDICIONARIOS ACTUALES:</div>
-            <ul id="list-bets"></ul>
-        </div>
+    <div id="view-player" class="hidden">
+        <input type="text" id="p-name" placeholder="NOMBRE DEL HÉROE">
+        <input type="number" id="p-bet" placeholder="¿CUÁNTAS SALAS?">
+        <button onclick="enviarApuesta()">SELLAR APUESTA</button>
+        <p id="msg-ok" style="color: var(--gold); font-size: 1.5rem;"></p>
     </div>
 </div>
 
 <script>
+    // --- CONFIGURACIÓN ---
     const SB_URL = 'https://mzlamrxvtvxbuamyfplz.supabase.co';
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16bGFtcnh2dHZ4YnVhbXlmcGx6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNTAxNjEsImV4cCI6MjA5MjkyNjE2MX0.fdebTvX68sDHUbIjCFDhfipauXap4qabWko7U8gLyxg';
     const miSupabase = supabase.createClient(SB_URL, SB_KEY);
@@ -206,87 +183,143 @@
     const urlParams = new URLSearchParams(window.location.search);
     const soyHost = urlParams.get('host') === 'true';
 
-    window.addEventListener('DOMContentLoaded', () => {
-        if (soyHost) {
-            document.getElementById('view-host').classList.remove('hidden');
-            escucharApuestas();
-        } else {
-            document.getElementById('view-player').classList.remove('hidden');
-        }
-    });
+    // Iniciar vistas
+    if (soyHost) {
+        document.getElementById('view-host').classList.remove('hidden');
+        escucharApuestas();
+    } else {
+        document.getElementById('view-player').classList.remove('hidden');
+    }
+
+    // --- LÓGICA DE GENERACIÓN PROCEDURAL ---
+    const tileSize = 50; // Tamaño de cada celda en el grid
+    let roomsData = [];
 
     async function nuevaRonda() {
         const letras = ['A', 'B', 'C'];
-        let nuevaSeed = "";
-        for(let i=0; i<3; i++) nuevaSeed += letras[Math.floor(Math.random() * 3)];
+        let seed = "";
+        for(let i=0; i<3; i++) seed += letras[Math.floor(Math.random() * 3)];
         
-        document.getElementById('display-seed').innerText = nuevaSeed;
-        document.getElementById('dungeon-visual').innerHTML = "";
-        document.getElementById('btn-reveal').style.display = 'inline-block';
+        document.getElementById('seed-display').innerText = "SEED ACTUAL: " + seed;
+        document.getElementById('dungeon-canvas').innerHTML = "";
+        document.getElementById('btn-reveal').style.display = 'block';
         
+        // Reset DB
         await miSupabase.from('apuestas').delete().neq('id', 0);
         document.getElementById('list-bets').innerHTML = "";
     }
 
     async function enviarApuesta() {
-        const valNombre = document.getElementById('p-name').value;
-        const valApuesta = document.getElementById('p-bet').value;
-        if(!valNombre || !valApuesta) return alert("Héroe, pon tu nombre y apuesta.");
+        const n = document.getElementById('p-name').value;
+        const b = document.getElementById('p-bet').value;
+        if(!n || !b) return alert("Héroe, rellena los datos.");
 
-        const { error } = await miSupabase
-            .from('apuestas')
-            .insert([{ name: valNombre, cantidad: parseInt(valApuesta) }]);
-
-        if (!error) {
-            document.getElementById('msg-ok').innerHTML = "✅ APUESTA SELLADA CON SANGRE";
+        const { error } = await miSupabase.from('apuestas').insert([{ name: n, cantidad: parseInt(b) }]);
+        if(!error) {
+            document.getElementById('msg-ok').innerText = "✅ APUESTA REGISTRADA";
             document.getElementById('p-bet').value = "";
         }
     }
 
     function revelar() {
-        const seed = document.getElementById('display-seed').innerText;
-        let total = 0;
-        seed.split('').forEach(letra => {
-            if(letra === 'A') total += Math.floor(Math.random() * 4) + 1;
-            if(letra === 'B') total += Math.floor(Math.random() * 6) + 1;
-            if(letra === 'C') total += Math.floor(Math.random() * 8) + 1;
+        const seed = document.getElementById('seed-display').innerText.split(": ")[1];
+        let totalRooms = 0;
+        seed.split('').forEach(l => {
+            if(l === 'A') totalRooms += Math.floor(Math.random() * 4) + 1;
+            if(l === 'B') totalRooms += Math.floor(Math.random() * 6) + 1;
+            if(l === 'C') totalRooms += Math.floor(Math.random() * 8) + 1;
         });
-        animarMazmorra(total);
+
+        generarMapaProcedural(totalRooms);
+        document.getElementById('btn-reveal').style.display = 'none';
     }
 
-    function animarMazmorra(num) {
-        const contenedor = document.getElementById('dungeon-visual');
-        contenedor.innerHTML = "";
+    function generarMapaProcedural(num) {
+        const canvas = document.getElementById('dungeon-canvas');
+        canvas.innerHTML = "";
+        roomsData = [];
         
-        for(let i=0; i<num; i++) {
-            setTimeout(() => {
-                const sala = document.createElement('div');
-                sala.className = 'room connected-r';
-                
-                // Icono aleatorio de sala (tesoro, enemigo, vacío)
-                const randomIcon = Math.random();
-                if(randomIcon > 0.8) sala.innerHTML = "💰";
-                else if(randomIcon > 0.6) sala.innerHTML = "💀";
-                else sala.innerHTML = "🪨";
+        // Centro del canvas
+        const startX = Math.floor(canvas.offsetWidth / 2 / tileSize) * tileSize;
+        const startY = Math.floor(canvas.offsetHeight / 2 / tileSize) * tileSize;
 
-                contenedor.appendChild(sala);
-                
-                // Efecto de vibración en el contenedor cada vez que aparece una sala
-                document.getElementById('game-container').classList.add('shake');
-                setTimeout(() => document.getElementById('game-container').classList.remove('shake'), 200);
-                
+        // Primera habitación
+        colocarHabitacion(startX, startY, "🏰", 0);
+
+        // Generar resto de habitaciones
+        for(let i = 1; i < num; i++) {
+            setTimeout(() => {
+                let success = false;
+                let intentos = 0;
+
+                while(!success && intentos < 50) {
+                    // Elegir una habitación existente para ramificar
+                    const parent = roomsData[Math.floor(Math.random() * roomsData.length)];
+                    const dir = [[0,1], [0,-1], [1,0], [-1,0]][Math.floor(Math.random()*4)];
+                    
+                    const newX = parent.x + (dir[0] * tileSize);
+                    const newY = parent.y + (dir[1] * tileSize);
+
+                    // Verificar si está libre
+                    if(!roomsData.some(r => r.x === newX && r.y === newY)) {
+                        colocarPasillo(parent.x, parent.y, newX, newY);
+                        colocarHabitacion(newX, newY, "🪨", i);
+                        success = true;
+                    }
+                    intentos++;
+                }
             }, i * 300);
         }
     }
 
+    function colocarHabitacion(x, y, icon, index) {
+        const canvas = document.getElementById('dungeon-canvas');
+        const room = document.createElement('div');
+        room.className = 'room';
+        room.style.left = x + 'px';
+        room.style.top = y + 'px';
+        
+        // Iconos especiales
+        if(index > 0) {
+            const rand = Math.random();
+            if(rand > 0.85) icon = "💰";
+            else if(rand > 0.7) icon = "💀";
+        }
+        
+        room.innerHTML = icon;
+        canvas.appendChild(room);
+        roomsData.push({x, y});
+    }
+
+    function colocarPasillo(x1, y1, x2, y2) {
+        const canvas = document.getElementById('dungeon-canvas');
+        const corr = document.createElement('div');
+        corr.className = 'corridor';
+        
+        const padding = 20;
+        if(x1 === x2) { // Vertical
+            corr.style.width = '4px';
+            corr.style.height = tileSize + 'px';
+            corr.style.left = (x1 + padding) + 'px';
+            corr.style.top = Math.min(y1, y2) + padding + 'px';
+        } else { // Horizontal
+            corr.style.height = '4px';
+            corr.style.width = tileSize + 'px';
+            corr.style.top = (y1 + padding) + 'px';
+            corr.style.left = Math.min(x1, x2) + padding + 'px';
+        }
+        canvas.appendChild(corr);
+    }
+
     function escucharApuestas() {
-        miSupabase.channel('cambios-apuestas')
+        miSupabase.channel('apuestas-live')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'apuestas' }, payload => {
                 const lista = document.getElementById('list-bets');
                 const item = document.createElement('li');
-                item.style.animation = "roomAppear 0.4s ease forwards";
-                item.innerHTML = `<span>👤 ${payload.new.name}</span> <span class="bet-val">${payload.new.cantidad} HAB</span>`;
-                lista.appendChild(item);
+                item.style.padding = "5px";
+                item.style.borderBottom = "1px solid #333";
+                item.innerHTML = `<span style="color:var(--gold)">${payload.new.name}</span>: ${payload.new.cantidad} salas`;
+                lista.prepend(item);
             })
             .subscribe();
     }
