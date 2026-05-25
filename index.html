@@ -421,10 +421,10 @@
         
         <div class="pact-container">
             <button class="action-btn btn-blood" id="btn-blood" onclick="sellarPacto('S')">
-                🎯 SANGRE<br><span style="font-size:1rem; color:#ffcccc;">(Nº Exacto)</span><br><strong style="font-size:1.6rem;">+3 PTS</strong>
+                🎯 SANGRE<br><span style="font-size:1rem; color:#ffcccc;">(Exacto o Cercano)</span><br><strong style="font-size:1.6rem;">+1 / +0.5 PT</strong>
             </button>
             <button class="action-btn btn-ghost" id="btn-ghost" onclick="sellarPacto('A')">
-                🛡️ ALMAS<br><span style="font-size:1rem; color:#cce5ff;">(Rango ±1)</span><br><strong style="font-size:1.6rem;">+1 PT</strong>
+                🛡️ ALMAS<br><span style="font-size:1rem; color:#cce5ff;">(Rango ±1)</span><br><strong style="font-size:1.6rem;">+0.5 / +0.25 PT</strong>
             </button>
         </div>
     </div>
@@ -637,12 +637,12 @@
             }
         } 
         else if (payload.state === 'results') {
-            renderPlayerResultCard(payload.total, payload.scores);
+            renderPlayerResultCard(payload.total, payload.scores, payload.exactSangre, payload.minDiffSangre);
             showScreen('screen-results');
         }
     }
 
-    function renderPlayerResultCard(total, scores) {
+    function renderPlayerResultCard(total, scores, exactSangre, minDiffSangre) {
         if(!myCurrentPact) {
             document.getElementById('p-res-title').innerText = "💤 AUSENTE";
             document.getElementById('p-res-sub').innerText = "No apostaste nada.";
@@ -656,22 +656,31 @@
 
         let title = "", sub = "", bg = "";
         
-        if (myCurrentPact === 'S' && diff === 0) {
-            title = "¡GLORIA ABSOLUTA!"; sub = "+3 PUNTOS GANADOS"; bg = "linear-gradient(180deg, #ffd700, #b8860b)";
-            if(navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 500]);
-            playJuicySound('win');
-        } else if (myCurrentPact === 'S' && diff === 1) {
-            title = "🤡 ERES UN PAYASO"; sub = "Fallaste por 1 misera sala..."; bg = "linear-gradient(180deg, #e74c3c, #900)";
-            if(navigator.vibrate) navigator.vibrate([500]);
-            playJuicySound('fail');
-        } else if (myCurrentPact === 'A' && diff <= 1) {
-            title = "¡SUPERVIVIENTE!"; sub = "+1 PUNTO GANADO"; bg = "linear-gradient(180deg, #3498db, #154360)";
-            if(navigator.vibrate) navigator.vibrate([100, 50, 100]);
-            playJuicySound('win');
-        } else {
-            title = "💀 HAS MUERTO"; sub = "Tus cálculos fueron basura."; bg = "linear-gradient(180deg, #333, #000)";
-            if(navigator.vibrate) navigator.vibrate([200]);
-            playJuicySound('fail');
+        if (myCurrentPact === 'S') {
+            if (diff === 0) {
+                title = "¡GLORIA ABSOLUTA!"; sub = "+1 PUNTO GANADO"; bg = "linear-gradient(180deg, #ffd700, #b8860b)";
+                if(navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 500]); playJuicySound('win');
+            } else if (!exactSangre && diff === minDiffSangre) {
+                title = "¡POR LOS PELOS!"; sub = "+0.5 PUNTOS (El más cercano)"; bg = "linear-gradient(180deg, #d35400, #873600)";
+                if(navigator.vibrate) navigator.vibrate([100, 50, 100]); playJuicySound('win');
+            } else if (exactSangre && diff === 1) {
+                title = "🤡 ERES UN PAYASO"; sub = "Alguien acertó y tú fallaste por 1..."; bg = "linear-gradient(180deg, #e74c3c, #900)";
+                if(navigator.vibrate) navigator.vibrate([500]); playJuicySound('fail');
+            } else {
+                title = "💀 HAS MUERTO"; sub = "Tus cálculos fueron basura."; bg = "linear-gradient(180deg, #333, #000)";
+                if(navigator.vibrate) navigator.vibrate([200]); playJuicySound('fail');
+            }
+        } else if (myCurrentPact === 'A') {
+            if (diff === 0) {
+                title = "¡PRECISIÓN ESPIRITUAL!"; sub = "+0.5 PUNTOS GANADOS"; bg = "linear-gradient(180deg, #3498db, #154360)";
+                if(navigator.vibrate) navigator.vibrate([100, 50, 100]); playJuicySound('win');
+            } else if (diff === 1) {
+                title = "¡SUPERVIVIENTE!"; sub = "+0.25 PUNTOS GANADOS"; bg = "linear-gradient(180deg, #2980b9, #1a5276)";
+                if(navigator.vibrate) navigator.vibrate([50]); playJuicySound('coin');
+            } else {
+                title = "💀 HAS MUERTO"; sub = "Demasiado lejos del resultado."; bg = "linear-gradient(180deg, #333, #000)";
+                if(navigator.vibrate) navigator.vibrate([200]); playJuicySound('fail');
+            }
         }
 
         document.getElementById('p-res-title').innerText = title;
@@ -905,6 +914,8 @@
             logMsg(`Preparando <span class="log-highlight">Slot ${i+1} (${letra})</span>...`, claseCSS); await sleep(1500); 
 
             let sumaDado = 0; let tiradas = []; let tirada;
+            let haExplotado = false; // BANDERA PARA LIMITAR A 1 EXPLOSIÓN
+            
             do {
                 diceBody.className = "rpg-dice-volumetric dice-rolling"; diceContainer.classList.remove('dice-explode');
                 let rollAnim = setInterval(() => { diceText.innerText = Math.floor(Math.random() * caras) + 1; playJuicySound('tick'); }, 80);
@@ -912,7 +923,8 @@
                 
                 tirada = Math.floor(Math.random() * caras) + 1; sumaDado += tirada; diceText.innerText = tirada;
                 
-                if(tirada === caras) {
+                if(tirada === caras && !haExplotado) { // SOLO EXPLOTA SI NO LO HA HECHO ANTES
+                    haExplotado = true;
                     tiradas.push(`<span class="log-explode-text">${tirada}💥</span>`); diceContainer.classList.add('dice-explode');
                     giantLabel.innerText = "¡EXPLOSIÓN CRÍTICA!"; giantLabel.style.color = "#e74c3c";
                     document.getElementById('game-container').classList.add('shake-apocalyptic'); setTimeout(()=> { document.getElementById('game-container').classList.remove('shake-apocalyptic'); }, 800);
@@ -924,8 +936,9 @@
                 } else {
                     tiradas.push(tirada); giantLabel.innerText = `+${tirada}`; giantLabel.style.color = "#2ecc71";
                     playJuicySound('lock'); logMsg(`Se detiene en <strong>${tirada}</strong>.`, claseCSS); await sleep(2000); 
+                    break; // FORZAMOS LA SALIDA DEL BUCLE
                 }
-            } while(tirada === caras);
+            } while(true);
             
             giantOverlay.style.display = 'none'; basePorLetra[letra] += sumaDado; totalSalasFinales += sumaDado;
             logMsg(`Resultado Slot ${i+1}: <span class="log-highlight">${sumaDado} salas</span>. {${tiradas.join(' + ')}}`, claseCSS);
@@ -985,19 +998,48 @@
         const podium = document.getElementById('podium'); const clowns = document.getElementById('clown-club');
         
         banner.style.display = 'block'; podium.innerHTML = ""; clowns.innerHTML = "";
-        let winnersSangre = []; let winnersAlmas = []; let payasos = []; let someoneWon = false;
+        let winnersSangreExact = []; let winnersSangreAprox = []; 
+        let winnersAlmasExact = []; let winnersAlmasAprox = []; 
+        let payasos = []; let someoneWon = false;
 
+        // PASO 1: Encontrar la diferencia mínima de los de Sangre
+        let minDiffSangre = Infinity;
+        let exactSangre = false;
+        b.forEach(bet => {
+            let parts = bet.name.split('|'); let pact = parts[4] || 'S'; let val = parseInt(bet.cantidad);
+            if (pact === 'S') {
+                let diff = Math.abs(val - total);
+                if (diff < minDiffSangre) minDiffSangre = diff;
+                if (diff === 0) exactSangre = true;
+            }
+        });
+
+        // PASO 2: Repartir puntos con las nuevas reglas
         b.forEach(bet => {
             let parts = bet.name.split('|');
             let av = parts[2] || '🧙‍♂️'; let nm = parts[3] || bet.name; let pact = parts[4] || 'S';
             let val = parseInt(bet.cantidad); let key = `${av}|${nm}`;
             if(!globalScores[key]) globalScores[key] = 0;
 
+            let diff = Math.abs(val - total);
+
             if(pact === 'S') {
-                if(val === total) { winnersSangre.push({av, nm, val}); globalScores[key] += 3; someoneWon = true; } 
-                else if (Math.abs(val - total) === 1) { payasos.push({av, nm, val}); }
+                if(diff === 0) { 
+                    winnersSangreExact.push({av, nm, val}); globalScores[key] += 1; someoneWon = true; 
+                } 
+                else if (!exactSangre && diff === minDiffSangre) { 
+                    winnersSangreAprox.push({av, nm, val}); globalScores[key] += 0.5; someoneWon = true; 
+                }
+                else if (exactSangre && diff === 1) { 
+                    payasos.push({av, nm, val}); // Payaso solo si alguien acertó el exacto
+                }
             } else if (pact === 'A') {
-                if(Math.abs(val - total) <= 1) { winnersAlmas.push({av, nm, val}); globalScores[key] += 1; someoneWon = true; }
+                if(diff === 0) { 
+                    winnersAlmasExact.push({av, nm, val}); globalScores[key] += 0.5; someoneWon = true; 
+                }
+                else if(diff === 1) { 
+                    winnersAlmasAprox.push({av, nm, val}); globalScores[key] += 0.25; someoneWon = true; 
+                }
             }
         });
 
@@ -1006,8 +1048,10 @@
 
         if(someoneWon) {
             playJuicySound('win'); pTitle.innerText = "🏆 GLORIA EN LA SALA 🏆"; pTitle.style.color = "#2ecc71";
-            winnersSangre.forEach(w => { podium.innerHTML += `<div class="winner-card"><div class="avatar">${w.av}</div><div class="name">${w.nm}</div><div class="pts" style="font-size: 1.5rem; color: var(--blood); background: #000; padding: 2px 10px; border-radius: 10px; margin-top: 5px; font-weight:bold;">+3 PTS (Sangre)</div></div>`; });
-            winnersAlmas.forEach(w => { podium.innerHTML += `<div class="winner-card ghost" style="background: rgba(52, 152, 219, 0.1); border-color: var(--ghost); box-shadow: 0 0 20px rgba(52, 152, 219, 0.3);"><div class="avatar">${w.av}</div><div class="name">${w.nm}</div><div class="pts" style="font-size: 1.5rem; color: var(--ghost); background: #000; padding: 2px 10px; border-radius: 10px; margin-top: 5px; font-weight:bold;">+1 PT (Almas)</div></div>`; });
+            winnersSangreExact.forEach(w => { podium.innerHTML += `<div class="winner-card"><div class="avatar">${w.av}</div><div class="name">${w.nm}</div><div class="pts" style="font-size: 1.5rem; color: var(--blood); background: #000; padding: 2px 10px; border-radius: 10px; margin-top: 5px; font-weight:bold;">+1 PT (Exacto)</div></div>`; });
+            winnersSangreAprox.forEach(w => { podium.innerHTML += `<div class="winner-card"><div class="avatar">${w.av}</div><div class="name">${w.nm}</div><div class="pts" style="font-size: 1.5rem; color: #ff9900; background: #000; padding: 2px 10px; border-radius: 10px; margin-top: 5px; font-weight:bold;">+0.5 PT (Cercano)</div></div>`; });
+            winnersAlmasExact.forEach(w => { podium.innerHTML += `<div class="winner-card ghost" style="background: rgba(52, 152, 219, 0.1); border-color: var(--ghost); box-shadow: 0 0 20px rgba(52, 152, 219, 0.3);"><div class="avatar">${w.av}</div><div class="name">${w.nm}</div><div class="pts" style="font-size: 1.5rem; color: var(--ghost); background: #000; padding: 2px 10px; border-radius: 10px; margin-top: 5px; font-weight:bold;">+0.5 PT (Exacto)</div></div>`; });
+            winnersAlmasAprox.forEach(w => { podium.innerHTML += `<div class="winner-card ghost" style="background: rgba(52, 152, 219, 0.1); border-color: var(--ghost); box-shadow: 0 0 20px rgba(52, 152, 219, 0.3);"><div class="avatar">${w.av}</div><div class="name">${w.nm}</div><div class="pts" style="font-size: 1.5rem; color: #a9cce3; background: #000; padding: 2px 10px; border-radius: 10px; margin-top: 5px; font-weight:bold;">+0.25 PT (Aprox)</div></div>`; });
         } else {
             playJuicySound('fail'); pTitle.innerText = "💀 TODOS MUERTOS 💀"; pTitle.style.color = "#e74c3c";
         }
@@ -1021,7 +1065,8 @@
         if(currentRound >= maxRounds) { nextBtn.innerText = "🏆 VER GANADOR DEL TORNEO 🏆"; nextBtn.style.background = "var(--gold)"; nextBtn.style.color = "#000"; } 
         else { nextBtn.innerText = "📊 VER CLASIFICACIÓN"; nextBtn.style.background = "#111"; nextBtn.style.color = "var(--gold)"; }
         
-        broadcastState('results', { total: total, scores: globalScores });
+        // Enviamos la data extra al móvil para que sepa por qué ganó
+        broadcastState('results', { total: total, scores: globalScores, exactSangre: exactSangre, minDiffSangre: minDiffSangre });
     }
 
     function mostrarClasificacion() {
