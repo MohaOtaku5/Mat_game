@@ -739,7 +739,7 @@
         }
 
         /* =========================================
-           VISTA JUGADOR (MÓVIL)
+           VISTA JUGADOR (MÓVIL) - UX MEJORADA
            ========================================= */
         #view-player { 
             width: 95vw; 
@@ -749,6 +749,7 @@
             align-items: center; 
             z-index: 10; 
             margin: 0 auto; 
+            position: relative;
         }
 
         .player-screen { 
@@ -763,6 +764,7 @@
             box-sizing: border-box; 
             border-radius: 15px; 
             box-shadow: 0 15px 40px rgba(0,0,0,0.9); 
+            position: relative;
         }
 
         .player-screen.active { 
@@ -846,7 +848,7 @@
             border: 1px solid #444; 
             padding: 10px 20px; 
             border-radius: 10px; 
-            margin-bottom: 25px; 
+            margin-bottom: 20px; 
             box-sizing: border-box; 
             box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
         }
@@ -914,7 +916,7 @@
             100% { transform: scale(1); } 
         }
         
-        /* BOTONES DE PACTO (NUEVO) */
+        /* BOTONES DE PACTO (MEJOR EXPLICADOS) */
         .pact-container { 
             display: flex; 
             width: 100%; 
@@ -971,6 +973,33 @@
             50% { transform: translateY(-20px) rotate(10deg); } 
             100% { transform: translateY(0px) rotate(0deg); } 
         }
+
+        /* MODAL DE TUTORIAL (NUEVO) */
+        .help-btn {
+            position: absolute;
+            top: -15px; right: -15px;
+            background: #222; border: 2px solid var(--gold); color: var(--gold);
+            width: 45px; height: 45px; border-radius: 50%;
+            font-size: 2.2rem; font-family: 'VT323'; font-weight: bold;
+            cursor: pointer; z-index: 50; display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.8);
+        }
+        
+        #tutorial-modal {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.9); z-index: 9999;
+            display: none; justify-content: center; align-items: center;
+        }
+        
+        .tutorial-content {
+            background: #111; border: 2px solid var(--gold);
+            width: 90%; max-width: 380px; padding: 25px; border-radius: 15px;
+            box-shadow: 0 0 30px rgba(255,204,0,0.2); text-align: left;
+        }
+        
+        .tutorial-content h3 { color: var(--gold); font-size: 2.2rem; margin-top: 0; text-align: center; border-bottom: 1px solid #444; padding-bottom: 10px;}
+        .tutorial-content ul { padding-left: 20px; font-size: 1.4rem; color: #ddd; line-height: 1.4; margin-bottom: 25px;}
+        .tutorial-content li { margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -986,8 +1015,7 @@
         if(audioCtx.state === 'suspended') audioCtx.resume();
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
-        osc.connect(gain); 
-        gain.connect(audioCtx.destination);
+        osc.connect(gain); gain.connect(audioCtx.destination);
         const now = audioCtx.currentTime;
 
         if (type === 'tick') { 
@@ -1084,6 +1112,7 @@
         <div style="font-size: 2.5rem; color:#fff; font-family:'VT323';">NÚMERO DE RONDAS</div>
         <input type="number" id="host-rounds" value="5" min="1" max="50" style="background: #111; color: var(--gold); border: 2px solid var(--gold); font-size: 3rem; text-align: center; width: 100px; padding: 10px; font-family: 'VT323'; margin: 20px 0;">
         <br>
+        <p style="color:#aaa; font-size:1.5rem; margin-bottom:20px;">Diles a los jugadores que entren en esta misma web desde su móvil.</p>
         <button style="background: linear-gradient(180deg, #ffd700 0%, #d4af37 100%); color: #000; border: 2px solid #aa8c2c; padding: 15px 40px; font-family: 'VT323'; font-size: 2.5rem; cursor: pointer; border-radius: 10px; text-transform: uppercase;" onmouseenter="playJuicySound('tick')" onclick="iniciarTorneo()">🔥 INICIAR TORNEO 🔥</button>
     </div>
     <button style="margin-top: 40px; background: transparent; border: 2px solid #e74c3c; color: #e74c3c; padding: 10px 20px; font-family: 'VT323'; font-size: 1.5rem; cursor: pointer;" onmouseenter="playJuicySound('tick')" onclick="limpiarBD()">🗑️ RESETEAR BASE DE DATOS (PELIGRO)</button>
@@ -1115,9 +1144,7 @@
         
         <div id="live-log">
             <h3 style="margin:0 0 10px 0; color:var(--gold); border-bottom:2px solid var(--gold); text-align:center; padding-bottom:10px;">📜 CRÓNICA DE FORJA</h3>
-            <div id="log-content">
-                <div class="log-system">El tablero está limpio. Esperando a los dioses...</div>
-            </div>
+            <div id="log-content"><div class="log-system">El tablero está limpio. Esperando a los dioses...</div></div>
         </div>
         
         <div id="winner-banner">
@@ -1148,9 +1175,22 @@
     </div>
 </div>
 
+<div id="tutorial-modal" onclick="toggleTutorial()">
+    <div class="tutorial-content" onclick="event.stopPropagation()">
+        <h3>📜 CÓMO JUGAR</h3>
+        <ul>
+            <li><strong>El Objetivo:</strong> Adivinar cuántas salas se van a dibujar en la pantalla principal.</li>
+            <li><strong>La Semilla:</strong> Primero verás qué 3 dados se van a usar (D4, D6 o D8).</li>
+            <li><strong>¡CUIDADO! Dados Explosivos:</strong> Si un dado saca su número máximo (ej. un 6 en un D6), ¡EXPLOTA, suma ese valor, y se vuelve a tirar!</li>
+            <li><strong>Dobles y Triples:</strong> Si se repiten letras en la semilla, el total se puede multiplicar por x2 o x3.</li>
+        </ul>
+        <button class="action-btn btn-gold" onclick="toggleTutorial()">¡ENTENDIDO!</button>
+    </div>
+</div>
+
 <div id="view-player">
     <div id="screen-setup" class="player-screen active">
-        <h2 class="player-title">CREA TU HÉROE</h2>
+        <h2 class="player-title">Paso 1: CREA TU HÉROE</h2>
         <p style="color:#aaa; text-align:center; margin-top:0; font-size: 1.2rem;">Elige tu avatar y nombre para el torneo.</p>
         
         <div class="avatar-grid" id="avatar-selector">
@@ -1167,15 +1207,15 @@
     </div>
 
     <div id="screen-bet" class="player-screen">
+        <button class="help-btn" onclick="toggleTutorial()">?</button>
+        
         <div id="player-info-tag">
-            <div>
-                <span id="tag-avatar" style="font-size:1.8rem; margin-right:5px;">🧙‍♂️</span> 
-                <span id="tag-name" style="color:var(--gold); font-size:1.6rem; font-weight:bold;">Héroe</span>
-            </div>
+            <div><span id="tag-avatar" style="font-size:1.8rem; margin-right:5px;">🧙‍♂️</span> <span id="tag-name" style="color:var(--gold); font-size:1.6rem; font-weight:bold;">Héroe</span></div>
             <span style="font-size:1.2rem; color:#888; text-decoration:underline; cursor:pointer; background:#222; padding:5px 10px; border-radius:5px;" onclick="clearProfile(); playJuicySound('click');">Cambiar</span>
         </div>
         
-        <h2 class="player-title" style="font-size:2rem; line-height:1.2;">¿CUÁNTAS SALAS<br>SOBREVIVIRÁ?</h2>
+        <h2 class="player-title" style="font-size:2.2rem; line-height:1.2; margin-bottom: 5px;">¿CUÁNTAS SALAS<br>SE CONSTRUIRÁN?</h2>
+        <p style="color:#aaa; text-align:center; font-size:1.3rem; margin-top:0; line-height: 1.2;">Calcula el total mirando los dados de la pantalla principal.</p>
         
         <div class="bet-control-panel">
             <div class="bet-row">
@@ -1191,27 +1231,30 @@
         
         <div class="pact-container">
             <button class="action-btn btn-blood" id="btn-blood" onclick="sellarPacto('S')">
-                🩸 SANGRE<br>
-                <span style="font-size:1.1rem; color:#ffcccc;">(Nº Exacto)</span><br>
-                <strong style="font-size:1.8rem;">+3 PTS</strong>
+                🎯 APUESTA EXACTA<br>
+                <span style="font-size:1rem; color:#ffcccc;">(Debes acertar clavado)</span><br>
+                <strong style="font-size:1.6rem;">Ganas +3 PTS</strong>
             </button>
             <button class="action-btn btn-ghost" id="btn-ghost" onclick="sellarPacto('A')">
-                👻 ALMAS<br>
-                <span style="font-size:1.1rem; color:#cce5ff;">(Rango ±1)</span><br>
-                <strong style="font-size:1.8rem;">+1 PT</strong>
+                🛡️ APUESTA SEGURA<br>
+                <span style="font-size:1rem; color:#cce5ff;">(Vale pasarse por ±1)</span><br>
+                <strong style="font-size:1.6rem;">Ganas +1 PT</strong>
             </button>
         </div>
     </div>
 
     <div id="screen-wait" class="player-screen">
-        <h2 class="player-title" style="color:var(--blood); font-size:3rem; text-shadow: 0 0 20px rgba(231, 76, 60, 0.5);">PACTO SELLADO</h2>
-        <div class="waiting-spinner">🔮</div>
+        <h2 class="player-title" style="color:var(--blood); font-size:3rem; text-shadow: 0 0 20px rgba(231, 76, 60, 0.5);">APUESTA SELLADA</h2>
+        
         <div style="background: rgba(0,0,0,0.5); border: 1px solid #333; padding: 20px; border-radius: 10px; width: 100%; box-sizing:border-box;">
             <p id="wait-msg-type" style="color:#ccc; text-align:center; font-size:1.4rem; margin:0;">Has apostado por el número:</p>
             <span id="wait-bet-val" style="color:var(--gold); font-size: 3.5rem; font-weight:bold; display:block; margin: 10px 0; text-align:center; text-shadow: 0 0 15px var(--gold);">0</span>
         </div>
-        <p style="color:#888; text-align:center; font-size:1.2rem; margin-top:20px;">Reza a los dados de la pantalla grande.</p>
-        <button class="action-btn btn-gold" style="margin-top: 20px; padding: 15px;" onclick="resetPlayerRound(); playJuicySound('click');">PREPARAR SIGUIENTE RONDA</button>
+        
+        <h3 style="color:#2ecc71; font-size:2rem; text-align:center; margin-top:30px; animation: pulseExplode 1.5s infinite alternate;">👀 MIRA A LA PANTALLA GIGANTE AHORA 👀</h3>
+        <p style="color:#888; text-align:center; font-size:1.2rem; margin-top:5px;">Los dados van a rodar.</p>
+        
+        <button class="action-btn btn-gold" style="margin-top: 30px; padding: 15px;" onclick="resetPlayerRound(); playJuicySound('click');">PREPARAR SIGUIENTE RONDA</button>
     </div>
 </div>
 
@@ -1354,7 +1397,7 @@
             setTimeout(() => {
                 flash.classList.remove('flash-blood', 'flash-ghost');
                 
-                document.getElementById('wait-msg-type').innerText = tipo === 'S' ? "PACTO SANGRE (Exacto):" : "PACTO ALMAS (Rango ±1):";
+                document.getElementById('wait-msg-type').innerText = tipo === 'S' ? "APUESTA EXACTA:" : "APUESTA SEGURA (Rango ±1):";
                 document.getElementById('wait-bet-val').innerText = tipo === 'S' ? currentBet : `[ ${currentBet-1} - ${currentBet} - ${currentBet+1} ]`;
                 document.getElementById('wait-bet-val').style.color = tipo === 'S' ? "var(--blood)" : "var(--ghost)";
                 
@@ -1372,6 +1415,16 @@
     function resetPlayerRound() { 
         if(navigator.vibrate) navigator.vibrate(30); 
         showScreen('screen-bet'); 
+    }
+
+    function toggleTutorial() {
+        const modal = document.getElementById('tutorial-modal');
+        if (modal.style.display === 'flex') {
+            modal.style.display = 'none';
+        } else {
+            playJuicySound('click');
+            modal.style.display = 'flex';
+        }
     }
 
     // ==========================================
@@ -1413,7 +1466,7 @@
     function formatPlayerName(dbName) {
         let parts = dbName.split('|');
         if(parts.length >= 2) {
-            let icon = parts[2] === 'S' ? '🩸' : (parts[2] === 'A' ? '👻' : '');
+            let icon = parts[2] === 'S' ? '🩸' : (parts[2] === 'A' ? '🛡️' : '');
             return `<span style="font-size:1.6rem">${parts[0]}</span> ${parts[1]} ${icon}`;
         }
         return dbName;
