@@ -23,7 +23,7 @@
             min-height: 100vh; overflow: hidden; touch-action: manipulation;
         }
 
-        /* Scanlines y Grid de fondo */
+        /* Scanlines y Grid de fondo animado */
         body::after {
             content: ""; position: fixed; top: 0; left: 0; width: 200vw; height: 200vh;
             background-image: linear-gradient(rgba(255, 204, 0, 0.05) 2px, transparent 2px), linear-gradient(90deg, rgba(255, 204, 0, 0.05) 2px, transparent 2px);
@@ -37,7 +37,7 @@
             z-index: 500; background-size: 100% 3px, 3px 100%; pointer-events: none;
         }
 
-        /* Scrollbar personalizada */
+        /* Scrollbar personalizada para Host */
         ::-webkit-scrollbar { width: 10px; }
         ::-webkit-scrollbar-track { background: rgba(0,0,0,0.5); border-radius: 5px; }
         ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 5px; }
@@ -64,7 +64,9 @@
         .btn-host-action { background: #111; color: var(--gold); border: 2px solid var(--gold); padding: 15px 30px; font-size: 1.8rem; border-radius: 5px; letter-spacing: 2px; }
         .btn-host-action:hover:not(:disabled) { background: var(--gold); color: #000; box-shadow: 0 0 20px var(--gold); }
 
-        /* VISTA HOST: SETUP */
+        /* =========================================
+           VISTA HOST: SETUP & LOBBY
+           ========================================= */
         #host-setup { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(10, 10, 15, 0.98); z-index: 5000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .setup-box { background: #000; border: 4px solid var(--gold); padding: 50px; text-align: center; border-radius: 10px; box-shadow: 0 0 50px rgba(255, 204, 0, 0.2); }
         .setup-input { background: #111; color: var(--gold); border: 2px solid var(--gold); font-size: 3rem; text-align: center; width: 120px; padding: 10px; font-family: 'VT323'; margin: 20px 0; }
@@ -74,7 +76,9 @@
         .lobby-player-card { background: rgba(255,204,0,0.1); border: 2px solid var(--gold); padding: 10px 20px; border-radius: 8px; font-size: 2rem; color: #fff; display: flex; align-items: center; gap: 10px; animation: popText 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .lobby-player-card .av { font-size: 3rem; }
 
-        /* VISTA HOST: JUEGO */
+        /* =========================================
+           VISTA HOST: JUEGO
+           ========================================= */
         #game-container { width: 95vw; height: 92vh; background: rgba(10,10,12,0.9); border: 4px solid var(--gold); display: flex; flex-direction: column; position: relative; box-shadow: 0 0 30px rgba(0,0,0,0.8), inset 0 0 50px rgba(0,0,0,0.8); border-radius: 10px; overflow: hidden; }
         header { padding: 15px 30px; border-bottom: 2px solid var(--gold); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.8); position: relative; z-index: 10; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
         h1 { margin: 0; color: var(--gold); font-size: 2.8rem; text-shadow: 2px 2px 0px #000, 0 0 15px var(--gold); letter-spacing: 2px; display: flex; flex-direction: column;}
@@ -99,7 +103,9 @@
         .log-final { background: var(--gold); color: #000; text-align: center; font-weight: bold; font-size: 2.2rem; border-radius: 5px; padding: 15px; margin-top: 15px; box-shadow: 0 0 20px var(--gold); }
         @keyframes slideInLeft { 0% { transform: translateX(-50px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
 
-        /* DADOS GIGANTES 3D */
+        /* =========================================
+           DADOS GIGANTES 3D 
+           ========================================= */
         #giant-dice-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.95) 100%); z-index: 400; display: none; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(8px); perspective: 1200px; }
         #giant-dice-label { font-size: 5rem; color: var(--gold); font-weight: bold; margin-bottom: 60px; text-shadow: 0 5px 15px #000, 0 0 20px var(--gold); text-align: center; letter-spacing: 2px; transition: 0.2s;}
         
@@ -121,7 +127,7 @@
         .dice-explode .dice-layer { clip-path: none !important; border-radius: 50% !important; background: radial-gradient(circle, #fff 0%, #ff4d4d 40%, #990000 100%) !important; color: transparent !important; border: none !important; }
         @keyframes supernova { 0% { transform: translate(-50%, -50%) scale(1); filter: brightness(1) drop-shadow(0 0 50px #ff0000); opacity: 1;} 20% { transform: translate(-50%, -50%) scale(3); filter: brightness(2) drop-shadow(0 0 100px #ff0000); opacity: 1;} 100% { transform: translate(-50%, -50%) scale(12); filter: brightness(5) blur(15px); opacity: 0; } }
 
-        /* TRAGAPERRAS */
+        /* TRAGAPERRAS Y MAZMORRA */
         .controls { padding: 20px; background: rgba(0,0,0,0.8); display: flex; justify-content: center; gap: 30px; border-top: 2px solid var(--gold); z-index: 10; }
         #seed-tag { display: flex; flex-direction: column; align-items: center; min-width: 280px; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 10px; border: 1px solid #444; }
         .slot-machine { display: flex; gap: 15px; margin-bottom: 5px; }
@@ -150,7 +156,9 @@
         .shake-heavy { animation: shakeHeavy 0.4s; filter: blur(1px); }
         @keyframes shakeHeavy { 0%, 100% { transform: translate(0,0); } 25% { transform: translate(-12px, -10px); } 50% { transform: translate(12px, 10px); } 75% { transform: translate(-10px, 12px); } }
 
-        /* PODIO Y CLASIFICACIÓN (ARREGLADO PARA ESTAR EN PRIMER PLANO SIEMPRE) */
+        /* =========================================
+           PODIO Y CLASIFICACIÓN (Z-INDEX ALTO)
+           ========================================= */
         #winner-banner { 
             position: fixed; 
             top: 50%; left: 50%; 
@@ -159,14 +167,14 @@
             border: 4px double var(--gold); 
             padding: 40px; 
             text-align: center; 
-            z-index: 99999; /* Super Alto */
+            z-index: 99999; /* Garantiza estar por encima de los dados y mazmorra */
             display: none; 
             width: 90vw;
             max-width: 800px; 
             box-shadow: 0 0 80px rgba(0,0,0,1), inset 0 0 50px rgba(255,204,0,0.1); 
             border-radius: 20px; 
-            max-height: 90vh; /* Para que quepa siempre */
-            overflow-y: auto; /* Scroll si hay demasiados payasos */
+            max-height: 90vh; /* Scroll si hay demasiados elementos */
+            overflow-y: auto; 
             animation: dropIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         @keyframes dropIn { 0% { transform: translate(-50%, -60%) scale(0.8); opacity: 0; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
@@ -191,11 +199,13 @@
 
         #bet-timer { color: #e74c3c; font-size: 1.6rem; font-weight: bold; margin-top: 5px; height: 25px; letter-spacing: 1px;}
 
-        /* CONFETI */
+        /* CONFETI JUGOSO */
         .confetti-particle { position: fixed; z-index: 999999; font-size: 2rem; pointer-events: none; animation: fall linear forwards; }
         @keyframes fall { to { transform: translateY(100vh) rotate(720deg); } }
 
-        /* VISTA JUGADOR (MÓVIL) */
+        /* =========================================
+           VISTA JUGADOR (MÓVIL)
+           ========================================= */
         #view-player { width: 95vw; max-width: 420px; display: flex; flex-direction: column; align-items: center; z-index: 10; margin: 0 auto; position: relative;}
         .player-screen { display: none; flex-direction: column; align-items: center; width: 100%; background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%); border: 2px solid #444; border-top: 2px solid var(--gold); padding: 30px 20px; box-sizing: border-box; border-radius: 15px; box-shadow: 0 15px 40px rgba(0,0,0,0.9); position: relative; }
         .player-screen.active { display: flex; animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
@@ -283,7 +293,9 @@
         }
     }
 
-    if (new URLSearchParams(window.location.search).get('host') === 'true') document.body.classList.add('is-host');
+    // Identificar si somos Host o Jugador
+    const IS_HOST = new URLSearchParams(window.location.search).get('host') === 'true';
+    if (IS_HOST) document.body.classList.add('is-host');
     else document.body.classList.add('is-player');
 
     function dispararConfeti() {
@@ -317,6 +329,8 @@
         <br>
         <button class="btn-gold" style="padding: 15px 40px; font-size: 2.5rem; border-radius: 10px;" onmouseenter="playJuicySound('tick')" onclick="iniciarTorneo()">🔥 INICIAR TORNEO 🔥</button>
     </div>
+    
+    <button style="margin-top: 40px; background: transparent; border: 2px solid #e74c3c; color: #e74c3c; padding: 10px 20px; font-family: 'VT323'; font-size: 1.5rem; cursor: pointer;" onmouseenter="playJuicySound('tick')" onclick="limpiarBD()">🗑️ RESETEAR BASE DE DATOS (PELIGRO)</button>
     
     <div style="width: 100%; text-align: center; margin-top: 30px;">
         <h3 style="color: var(--gold); font-size: 2rem; margin-bottom: 5px;">HÉROES CONECTADOS</h3>
@@ -474,22 +488,20 @@
 
 <script>
     // ==========================================
-    // CONFIGURACIÓN SUPABASE (WebSockets Puros)
+    // CONFIGURACIÓN SUPABASE (ARQUITECTURA HÍBRIDA)
     // ==========================================
     const SB_URL = 'https://mzlamrxvtvxbuamyfplz.supabase.co';
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16bGFtcnh2dHZ4YnVhbXlmcGx6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNTAxNjEsImV4cCI6MjA5MjkyNjE2MX0.fdebTvX68sDHUbIjCFDhfipauXap4qabWko7U8gLyxg';
     const miSupabase = supabase.createClient(SB_URL, SB_KEY);
     const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-    const IS_HOST = new URLSearchParams(window.location.search).get('host') === 'true';
-
     let currentRoomCode = "";
     let roomChannel = null;
 
-    // ESTADO DEL HOST EN MEMORIA (Reemplaza la DB Lenta)
+    // ESTADO DEL HOST EN MEMORIA RAM
     let globalScores = {}; 
     let currentRoundBets = {}; 
-    let connectedPlayers = {}; // Para el Lobby
+    let connectedPlayers = {}; 
 
     window.onload = () => {
         if (IS_HOST) {
@@ -497,6 +509,9 @@
             currentRoomCode = localStorage.getItem('dl_roomCode') || generateRoomCode();
             document.getElementById('display-room-code').innerText = currentRoomCode;
             document.getElementById('hud-room-code').innerText = currentRoomCode;
+            
+            // Host activa la escucha de Base de Datos y WebSockets
+            escucharBaseDatosHost();
             conectarCanalHost();
         } else {
             initPlayerMode();
@@ -570,30 +585,27 @@
         showScreen('screen-setup'); 
     }
 
-    // CONEXIÓN DEL JUGADOR A WEBSOCKETS PUROS
-    function conectarSalaJugador() {
+    // CONEXIÓN DEL JUGADOR
+    async function conectarSalaJugador() {
         currentRoomCode = localStorage.getItem('dl_playerRoom');
         document.getElementById('lobby-room-code').innerText = currentRoomCode;
         
+        // 1. Enviar ingreso a la Base de Datos (Seguro y fiable)
+        const joinPayload = `${currentRoomCode}|JOIN|${playerAvatar}|${localStorage.getItem('dl_playerName')}`;
+        await miSupabase.from('apuestas').insert([{ name: joinPayload, cantidad: -1 }]);
+
+        // 2. Conectarse a WebSockets para escuchar al Host
         if(roomChannel) roomChannel.unsubscribe();
         roomChannel = miSupabase.channel('room-' + currentRoomCode);
         
-        // Escuchar ordenes del Master
-        roomChannel.on('broadcast', { event: 'host-to-client' }, ({ payload }) => {
+        roomChannel.on('broadcast', { event: 'gameState' }, ({ payload }) => {
             handleGameState(payload);
         }).subscribe((status) => {
             if (status === 'SUBSCRIBED') {
                 if(navigator.vibrate) navigator.vibrate(50); 
                 showScreen('screen-lobby'); 
-                // Decirle al Master que he entrado
-                enviarAHost({ action: 'JOIN', name: localStorage.getItem('dl_playerName'), avatar: playerAvatar });
             }
         });
-    }
-
-    function enviarAHost(payload) {
-        if(!roomChannel) return;
-        roomChannel.send({ type: 'broadcast', event: 'client-to-host', payload: payload });
     }
 
     function handleGameState(payload) {
@@ -666,71 +678,93 @@
         void display.offsetWidth; display.classList.add('pop-anim');
     }
 
-    function sellarPacto(tipo) {
+    async function sellarPacto(tipo) {
         playJuicySound('lock');
         document.getElementById('btn-blood').disabled = true; document.getElementById('btn-ghost').disabled = true;
         myCurrentPact = tipo;
 
-        // Enviar por WebSockets
-        enviarAHost({ action: 'BET', name: localStorage.getItem('dl_playerName'), avatar: playerAvatar, bet: currentBet, pact: tipo });
+        // Enviar por DB (Fiable)
+        const finalName = `${currentRoomCode}|BET|${playerAvatar}|${localStorage.getItem('dl_playerName')}|${tipo}`;
+        const { error } = await miSupabase.from('apuestas').insert([{ name: finalName, cantidad: currentBet }]);
         
-        let flash = document.getElementById('flash-overlay'); flash.classList.remove('flash-anim'); flash.classList.add(tipo === 'S' ? 'flash-blood' : 'flash-ghost');
-        if(navigator.vibrate) navigator.vibrate([100, 50, 100]);
-        
-        setTimeout(() => {
-            flash.classList.remove('flash-blood', 'flash-ghost');
-            document.getElementById('wait-msg-type').innerText = tipo === 'S' ? "PACTO SANGRE (Exacto):" : "PACTO ALMAS (Rango ±1):";
-            document.getElementById('wait-bet-val').innerText = tipo === 'S' ? currentBet : `[ ${currentBet-1} - ${currentBet} - ${currentBet+1} ]`;
-            document.getElementById('wait-bet-val').style.color = tipo === 'S' ? "var(--blood)" : "var(--ghost)";
-            showScreen('screen-wait');
-        }, 300);
+        if(!error) {
+            let flash = document.getElementById('flash-overlay'); flash.classList.remove('flash-anim'); flash.classList.add(tipo === 'S' ? 'flash-blood' : 'flash-ghost');
+            if(navigator.vibrate) navigator.vibrate([100, 50, 100]);
+            
+            setTimeout(() => {
+                flash.classList.remove('flash-blood', 'flash-ghost');
+                document.getElementById('wait-msg-type').innerText = tipo === 'S' ? "PACTO SANGRE (Exacto):" : "PACTO ALMAS (Rango ±1):";
+                document.getElementById('wait-bet-val').innerText = tipo === 'S' ? currentBet : `[ ${currentBet-1} - ${currentBet} - ${currentBet+1} ]`;
+                document.getElementById('wait-bet-val').style.color = tipo === 'S' ? "var(--blood)" : "var(--ghost)";
+                showScreen('screen-wait');
+            }, 300);
+        } else {
+            alert("Error de conexión al sellar el pacto.");
+            document.getElementById('btn-blood').disabled = false; document.getElementById('btn-ghost').disabled = false;
+        }
     }
 
     // ==========================================
-    // LÓGICA DEL HOST (WEBSOCKETS PUROS)
+    // LÓGICA DEL HOST (HÍBRIDA)
     // ==========================================
     let roomsData = []; const tileSize = 55; let timerIntervalHost; let globalRoomCount = 0; let currentRound = 0; let maxRounds = 5;
+
+    async function limpiarBD() {
+        if(confirm("¿Estás seguro? Esto borrará TODAS las apuestas de Supabase y el ranking local.")) {
+            await miSupabase.from('apuestas').delete().neq('id', 0);
+            localStorage.clear(); 
+            alert("Base de datos limpia. Recarga la página.");
+            window.location.reload();
+        }
+    }
 
     function conectarCanalHost() {
         if(roomChannel) roomChannel.unsubscribe();
         roomChannel = miSupabase.channel('room-' + currentRoomCode);
-        
-        roomChannel.on('broadcast', { event: 'client-to-host' }, ({ payload }) => {
-            handleClientEvent(payload);
-        }).subscribe();
+        roomChannel.subscribe();
     }
 
     function broadcastState(stateName, payload = {}) {
         if(!IS_HOST || !roomChannel) return;
-        roomChannel.send({ type: 'broadcast', event: 'host-to-client', payload: { state: stateName, ...payload } });
+        // Host usa WebSockets para cambiar pantallas de los móviles al instante
+        roomChannel.send({ type: 'broadcast', event: 'gameState', payload: { state: stateName, ...payload } });
     }
 
-    function handleClientEvent(p) {
-        if (!IS_HOST) return;
+    function escucharBaseDatosHost() {
+        if(!IS_HOST) return;
+        miSupabase.channel('l').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'apuestas' }, p => {
+            let parts = p.new.name.split('|');
+            if(parts[0] !== currentRoomCode) return; // Aislar sala
 
-        if (p.action === 'JOIN') {
-            let key = `${p.avatar}|${p.name}`;
-            if(!connectedPlayers[key]) {
-                connectedPlayers[key] = { avatar: p.avatar, name: p.name };
-                if(!globalScores[key]) globalScores[key] = 0; // Inicializar score
-                
-                let lobbyGrid = document.getElementById('lobby-players-grid');
-                lobbyGrid.innerHTML += `<div class="lobby-player-card"><span class="av">${p.avatar}</span> ${p.name}</div>`;
-                playJuicySound('coin');
+            let action = parts[1];
+
+            if (action === 'JOIN') {
+                let av = parts[2]; let nm = parts[3];
+                let key = `${av}|${nm}`;
+                if(!connectedPlayers[key]) {
+                    connectedPlayers[key] = { avatar: av, name: nm };
+                    if(!globalScores[key]) globalScores[key] = 0; // Iniciar score si es nuevo
+                    let lobbyGrid = document.getElementById('lobby-players-grid');
+                    lobbyGrid.innerHTML += `<div class="lobby-player-card"><span class="av">${av}</span> ${nm}</div>`;
+                    playJuicySound('coin');
+                }
             }
-        } 
-        else if (p.action === 'BET') {
-            let key = `${p.avatar}|${p.name}`;
-            currentRoundBets[key] = { bet: p.bet, pact: p.pact }; // Guardar en Memoria RAM
-            
-            let icon = p.pact === 'S' ? '🩸' : '🛡️';
-            const li = document.createElement('li'); li.style.padding = "8px 5px"; li.style.borderBottom = "1px solid #333";
-            li.innerHTML = `<span style="font-weight:bold; color:#ddd;"><span style="font-size:1.6rem">${p.avatar}</span> ${p.name} ${icon}</span>: <span style="color:var(--gold); font-weight:bold; float:right;">${p.bet}</span>`;
-            document.getElementById('list-bets').prepend(li);
-            
-            playJuicySound('tick'); li.style.background = "rgba(255,204,0,0.3)"; li.style.transition = "background 0.5s";
-            setTimeout(()=> li.style.background = "transparent", 500);
-        }
+            else if (action === 'BET') {
+                let av = parts[2]; let nm = parts[3]; let pact = parts[4];
+                let key = `${av}|${nm}`;
+                
+                // Guardamos en memoria RAM para procesar rápido al final
+                currentRoundBets[key] = { bet: parseInt(p.new.cantidad), pact: pact }; 
+
+                let icon = pact === 'S' ? '🩸' : '🛡️';
+                const li = document.createElement('li'); li.style.padding = "8px 5px"; li.style.borderBottom = "1px solid #333";
+                li.innerHTML = `<span style="font-weight:bold; color:#ddd;"><span style="font-size:1.6rem">${av}</span> ${nm} ${icon}</span>: <span style="color:var(--gold); font-weight:bold; float:right;">${p.new.cantidad}</span>`;
+                document.getElementById('list-bets').prepend(li);
+
+                playJuicySound('tick'); li.style.background = "rgba(255,204,0,0.3)"; li.style.transition = "background 0.5s";
+                setTimeout(()=> li.style.background = "transparent", 500);
+            }
+        }).subscribe();
     }
 
     function iniciarTorneo() {
@@ -760,8 +794,8 @@
         if(currentRound >= maxRounds) { alert("El Torneo ha terminado."); return; }
         
         currentRound++; actualizarHUDTorneo();
-        currentRoundBets = {}; // Limpiamos apuestas en memoria
-        document.getElementById('list-bets').innerHTML = ""; // Limpiamos UI
+        currentRoundBets = {}; // Limpiamos apuestas en memoria RAM de esta ronda
+        document.getElementById('list-bets').innerHTML = ""; // Limpiamos lista UI
 
         document.getElementById('btn-seed').disabled = true;
         if(audioCtx.state === 'suspended') audioCtx.resume();
@@ -927,7 +961,7 @@
     function colocarPasillo(x1, y1, x2, y2) { const corr = document.createElement('div'); corr.className = 'corridor'; const p = 24; if(x1 === x2) { corr.style.width = '8px'; corr.style.height = tileSize + 'px'; corr.style.left = (x1 + p) + 'px'; corr.style.top = Math.min(y1, y2) + p + 'px'; } else { corr.style.height = '8px'; corr.style.width = tileSize + 'px'; corr.style.top = (y1 + p) + 'px'; corr.style.left = Math.min(x1, x2) + p + 'px'; } document.getElementById('dungeon-canvas').appendChild(corr); }
 
     // ==========================================
-    // SISTEMA DE PUNTOS Y RESULTADOS (EN MEMORIA)
+    // SISTEMA DE PUNTOS Y RESULTADOS (EN RAM)
     // ==========================================
     function processWinnersHost(total) {
         const banner = document.getElementById('winner-banner');
@@ -942,7 +976,7 @@
 
         let minDiffSangre = Infinity; let exactSangre = false;
         
-        // PASO 1: Analizar desde la memoria RAM (currentRoundBets)
+        // PASO 1: Analizar desde la memoria RAM (Super Rápido)
         Object.keys(currentRoundBets).forEach(key => {
             let p = currentRoundBets[key];
             if (p.pact === 'S') {
@@ -972,7 +1006,7 @@
 
         if(someoneWon) {
             playJuicySound('win'); pTitle.innerText = "🏆 GLORIA EN LA SALA 🏆"; pTitle.style.color = "#2ecc71";
-            if(exactSangre) dispararConfeti(); // CONFETI EN PANTALLA GRANDE
+            if(exactSangre) dispararConfeti(); // Confeti super pro
 
             winnersSangreExact.forEach(w => { podium.innerHTML += `<div class="winner-card"><div class="avatar">${w.av}</div><div class="name">${w.nm}</div><div class="pts" style="font-size: 1.5rem; color: var(--blood); background: #000; padding: 2px 10px; border-radius: 10px; margin-top: 5px; font-weight:bold;">+1 PT (Exacto)</div></div>`; });
             winnersSangreAprox.forEach(w => { podium.innerHTML += `<div class="winner-card"><div class="avatar">${w.av}</div><div class="name">${w.nm}</div><div class="pts" style="font-size: 1.5rem; color: #ff9900; background: #000; padding: 2px 10px; border-radius: 10px; margin-top: 5px; font-weight:bold;">+0.5 PT (Cercano)</div></div>`; });
@@ -1021,16 +1055,15 @@
         document.getElementById('winner-banner').style.display = 'none';
         
         if(currentRound >= maxRounds) {
-            // Torneo terminado, volvemos a setup pero forzamos a generar otra room
             document.getElementById('game-container').style.display = 'none';
             document.getElementById('host-setup').style.display = 'flex';
             currentRoomCode = generateRoomCode();
             document.getElementById('display-room-code').innerText = currentRoomCode;
             document.getElementById('hud-room-code').innerText = currentRoomCode;
-            conectarCanalHost(); // Nos conectamos al nuevo canal
-            document.getElementById('lobby-players-grid').innerHTML = ""; // Limpiar grid viejo
+            document.getElementById('lobby-players-grid').innerHTML = ""; 
+            conectarCanalHost(); 
         } else {
-            // BUG ARREGLADO: Solo preparamos la mesa, no borramos a los jugadores.
+            // EL BUG ESTABA AQUÍ ANTES: Solo preparamos la mesa, no borramos a los jugadores de RAM
             document.getElementById('btn-seed').style.display = 'block'; document.getElementById('btn-seed').disabled = false;
             broadcastState('lobby'); // Esto avisa a los móviles para que esperen a la nueva semilla
         }
