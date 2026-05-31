@@ -746,9 +746,8 @@
 
                 let icon = '🎯';
                 const li = document.createElement('li'); li.style.padding = "8px 5px"; li.style.borderBottom = "1px solid #333";
-                li.innerHTML = `<span style="font-weight:bold; color:#ddd;"><span style="font-size:1.6rem">${av}</span> ${nm} ${icon}</span>: <span style="color:var(--gold); font-weight:bold; float:right;">${p.new.cantidad}</span>`;
+                li.innerHTML = `<span style="font-weight:bold; color:#ddd;"><span style="font-size:1.6rem">${av}</span> ${nm} ${icon}</span>: <span style="color:var(--ghost); font-weight:bold; float:right;">Aposta registrada ✔️</span>`;
                 
-                // Keep only the latest 3 bets in the UI
                 const listBets = document.getElementById('list-bets');
                 listBets.prepend(li);
                 while (listBets.children.length > 3) {
