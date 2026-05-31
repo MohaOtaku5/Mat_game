@@ -65,7 +65,7 @@
         /* =========================================
            VISTA HOST: SETUP & LOBBY
            ========================================= */
-        #host-setup { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(10, 10, 15, 0.98); z-index: 5000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        #host-setup { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(10, 10, 15, 0.98); z-index: 5000; display: flex; flex-direction: column; align-items: center; overflow-y: auto; padding: 40px 0; box-sizing: border-box; }
         .setup-box { background: #000; border: 4px solid var(--gold); padding: 50px; text-align: center; border-radius: 10px; box-shadow: 0 0 50px rgba(255, 204, 0, 0.2); }
         .setup-input { background: #111; color: var(--gold); border: 2px solid var(--gold); font-size: 3rem; text-align: center; width: 120px; padding: 10px; font-family: 'VT323'; margin: 20px 0; }
         .room-code-display { font-size: 10rem; color: #2ecc71; font-weight: bold; letter-spacing: 15px; text-shadow: 0 0 40px rgba(46, 204, 113, 0.6); margin: 10px 0; }
@@ -77,7 +77,7 @@
         /* =========================================
            VISTA HOST: JUEGO
            ========================================= */
-        #game-container { width: 95vw; height: 92vh; background: rgba(10,10,12,0.9); border: 4px solid var(--gold); display: flex; flex-direction: column; position: relative; box-shadow: 0 0 30px rgba(0,0,0,0.8), inset 0 0 50px rgba(0,0,0,0.8); border-radius: 10px; overflow: hidden; }
+        #game-container { width: 95vw; height: 92vh; background: rgba(10,10,12,0.9); border: 4px solid var(--gold); display: flex; flex-direction: column; position: relative; box-shadow: 0 0 30px rgba(0,0,0,0.8), inset 0 0 50px rgba(0,0,0,0.8); border-radius: 10px; overflow: auto; }
         header { padding: 15px 30px; border-bottom: 2px solid var(--gold); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.8); position: relative; z-index: 10; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
         h1 { margin: 0; color: var(--gold); font-size: 2.8rem; text-shadow: 2px 2px 0px #000, 0 0 15px var(--gold); letter-spacing: 2px; display: flex; flex-direction: column;}
         #round-display { color: #fff; font-size: 1.6rem; letter-spacing: 1px; background: #222; padding: 2px 10px; border-radius: 5px; border: 1px solid #555; width: fit-content; margin-top: 5px; }
@@ -136,7 +136,7 @@
         @keyframes lockImpact { 0% { transform: scale(1.5) translateY(-20px); color: #fff; text-shadow: 0 0 30px #fff; } 100% { transform: scale(1) translateY(0); border-color: #555; box-shadow: none; } }
         @keyframes jackpotPulse { 0% { transform: scale(1); box-shadow: inset 0 0 20px rgba(231, 76, 60, 0.4); } 100% { transform: scale(1.1); box-shadow: inset 0 0 50px rgba(231, 76, 60, 0.9); } }
         
-        .room { position: absolute; width: 45px; height: 45px; background: linear-gradient(135deg, #3a3a3a, #1a1a1a); border: 2px solid #666; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 20px; z-index: 10; animation: roomPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; box-shadow: 2px 2px 10px rgba(0,0,0,0.8); }
+        .room { position: absolute; width: 35px; height: 35px; background: linear-gradient(135deg, #3a3a3a, #1a1a1a); border: 2px solid #666; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 16px; z-index: 10; animation: roomPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; box-shadow: 2px 2px 10px rgba(0,0,0,0.8); }
         .room.gold-room { border-color: var(--gold); background: linear-gradient(135deg, #5a4a00, #1a1a00); box-shadow: 0 0 15px rgba(255,204,0,0.5); }
         .corridor { position: absolute; background: #555; z-index: 5; box-shadow: inset 0 0 5px rgba(0,0,0,0.8); }
         @keyframes roomPop { 0% { transform: scale(0); opacity: 0; } 70% { transform: scale(1.2); } 100% { transform: scale(1); opacity: 1; } }
@@ -714,7 +714,7 @@
     // ==========================================
     // LÒGICA DEL HOST
     // ==========================================
-    let roomsData = []; const tileSize = 55; let timerIntervalHost; let globalRoomCount = 0; let currentRound = 0; let maxRounds = 5;
+    let roomsData = []; const tileSize = 45; let timerIntervalHost; let globalRoomCount = 0; let currentRound = 0; let maxRounds = 5;
 
     async function limpiarBD() {
         if(confirm("Segur? Això esborrarà TOTES les apostes de Supabase.")) {
